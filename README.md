@@ -16,3 +16,6 @@ Data from the small vessels will be combined with other data GFW collects for la
 
 [Hardware requirements](requirements.md)
 
+[Device Designs](design/README.md)
+
+Diagrams in markdown files are formatted using [Mermaid](https://mermaid.js.org/)
