@@ -16,6 +16,6 @@ flowchart TD
   status -. timeout .-> sleep
   sleep -- long press --> warn_sos([Warn SOS])
   warn_sos -. timeout .-> sos([SOS])
-  warn_gps -- long press --> sleep
+  warn_sos -- long press --> sleep
   sos -- long press --> sleep
 ```
