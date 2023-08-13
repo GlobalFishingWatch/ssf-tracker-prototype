@@ -19,3 +19,13 @@ Data from the small vessels will be combined with other data GFW collects for la
 [Device Designs](design/README.md)
 
 Diagrams in markdown files are formatted using [Mermaid](https://mermaid.js.org/)
+
+
+## Developing
+
+```console
+got clone https://github.com/GlobalFishingWatch/ssf-tracker-prototype
+cd ssf-tracker-prototype
+```
+
+See [README.md](controller/README.md) for more on developing the controller micropython code

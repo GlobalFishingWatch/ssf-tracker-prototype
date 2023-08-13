@@ -15,5 +15,4 @@ flowchart TD
     charge_ctrl --- battery[(Battery)]
     charge_ctrl -- SOC --- arduino
     charge_coil((Charge Coil)) --- charge_ctrl
-
 ```
