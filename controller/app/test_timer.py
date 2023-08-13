@@ -1,6 +1,6 @@
 import unittest
 
-from app.timer import Timer
+from timer import Timer
 
 
 class ManualTimer(Timer):
@@ -66,7 +66,8 @@ class TestTimer(unittest.TestCase):
         t.reset(duration_ms=100)
         self.assertIn(t, Timer.active_timers)
         t.cancel()
-        self.assertNotIn(t, Timer.active_timers)
+        self.assertTrue(t not in Timer.active_timers)
         self.assertEqual(len(Timer.active_timers), 0)
 
-
+if __name__ == '__main__':
+    unittest.main()

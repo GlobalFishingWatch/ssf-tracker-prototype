@@ -47,10 +47,11 @@ micropython -m mip install venv
 source venv-mpy/bin/activate 
 ```
 
-DONT NEED THIS - CANT RUN UNIT TESTS in micropython anyway
 Install micropython unittest tools
 ```
 micropython -m mip install unittest
+micropython -m mip install unittest-discover
+micropython -m mip install tempfile
 ```
 
 Running unit tests 

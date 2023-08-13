@@ -1,9 +1,9 @@
 import unittest
 
-from app.statemachine import EventData
-from app.statemachine import State
-from app.statemachine import Transition
-from app.statemachine import StateMachine
+from statemachine import EventData
+from statemachine import State
+from statemachine import Transition
+from statemachine import StateMachine
 
 
 class TestMachine (StateMachine):

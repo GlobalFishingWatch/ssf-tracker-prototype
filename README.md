@@ -24,7 +24,7 @@ Diagrams in markdown files are formatted using [Mermaid](https://mermaid.js.org/
 ## Developing
 
 ```console
-got clone https://github.com/GlobalFishingWatch/ssf-tracker-prototype
+git clone https://github.com/GlobalFishingWatch/ssf-tracker-prototype
 cd ssf-tracker-prototype
 ```
 

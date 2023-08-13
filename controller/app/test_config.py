@@ -1,17 +1,19 @@
 import unittest
 import tempfile
-from pathlib import Path
+# import shutil
+# from pathlib import Path
 import json
 
 
-from app.config import load_cofig
-from app.config import save_config
+from config import load_cofig
+from config import save_config
 
 
 
 class TestConfig(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory
+        # self.test_dir = tempfile.mkdtemp()
         self.test_dir = tempfile.TemporaryDirectory()
         self.test_cfg = {
             'test': 123
@@ -21,10 +23,12 @@ class TestConfig(unittest.TestCase):
 
     def tearDown(self):
         # Remove the directory after the test
+        # shutil.rmtree(self.test_dir)
         self.test_dir.cleanup()
 
     def _file_name(self):
-        return Path(self.test_dir.name) / 'config.json'
+        return f'{self.test_dir.name}/config.json'
+        # return Path(self.test_dir.name) / 'config.json'
 
     def test_load_config(self):
         config = load_cofig(self._file_name())
