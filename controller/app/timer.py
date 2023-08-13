@@ -1,14 +1,14 @@
 import time
 
+
 class Timer(object):
     active_timers = set()
 
-    def __init__(self, event_data=None, event='timeout', duration_ms=0, recurring=False):
+    def __init__(self, event=None, duration_ms=0, recurring=False):
         self._deadline = 0
         self.duration_ms = duration_ms
         self.recurring = recurring
         self.event = event
-        self.event_data = event_data
         self.active = False
 
     def _get_time_ms(self):
@@ -31,20 +31,31 @@ class Timer(object):
         for t in timers:
             t.check()
 
-    def reset(self, duration_ms=None, recurring=None, event=None, event_data=None):
-        if duration_ms is not None: self.duration_ms = duration_ms
-        if recurring is not None: self.recurring = recurring
-        if event is not None: self.event = event
-        if event_data is not None: self.event_data = event_data
+    def reset(self, duration_ms=None, recurring=None, event=None):
+        if duration_ms is not None:
+            self.duration_ms = duration_ms
+        if recurring is not None:
+            self.recurring = recurring
+        if event is not None:
+            self.event = event
         self._deadline = self._get_time_ms() + self.duration_ms
         self.active = True
         self.active_timers.add(self)
 
     def cancel(self):
         self.active = False
-        self.active_timers.remove(self)
-
+        self.active_timers.discard(self)
 
     def trigger_event(self):
-        if self.event_data and self.event_data.machine:
-            self.event_data.machine.trigger_event(trigger=self.event, event_data=self.event_data)
+        if self.event:
+            self.event.trigger()
+
+
+# A subclass of timer that lets us manually set the current time, used for testing
+class ManualTimer(Timer):
+    def __init__(self, **kwargs):
+        self.time_ms = 0
+        super(ManualTimer, self).__init__(**kwargs)
+
+    def _get_time_ms(self):
+        return self.time_ms

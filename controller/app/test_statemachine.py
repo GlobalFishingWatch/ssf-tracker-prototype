@@ -1,6 +1,6 @@
 import unittest
 
-from statemachine import EventData
+from statemachine import Event
 from statemachine import State
 from statemachine import Transition
 from statemachine import StateMachine
@@ -27,63 +27,64 @@ state_C = State('C')
 states = [state_A, state_B, state_C]
 
 transitions = [
-    Transition(source='A', dest='B', trigger='A2B'),
-    Transition(source='B', dest='C', trigger='B2C'),
-    Transition(source='C', dest='A', trigger='C2A'),
+    Transition(source='A', dest='B', event='A2B'),
+    Transition(source='B', dest='C', event='B2C'),
+    Transition(source='C', dest='A', event='C2A'),
 ]
 
 class TestStateMachine(unittest.TestCase):
     def setUp(self):
         pass
 
-    def make_event_data(self):
+    def make_event(self, name='test'):
         machine = TestMachine(states=states, transitions=transitions)
-        return EventData(machine=machine)
+        return Event(name=name, machine=machine)
 
     def test_callback(self):
-        event_data = self.make_event_data()
-        event_data.machine.callback('test_func', event_data)
-        self.assertTrue(event_data.machine.test)
+        event = self.make_event('test')
+        event.machine.callback('test_func', event)
+        self.assertTrue(event.machine.test)
 
     def test_state_on_enter(self):
-        event_data = self.make_event_data()
-        state = State('test_state', on_enter = 'test_func')
-        state.enter(event_data)
-        self.assertTrue(event_data.machine.test)
+        event = self.make_event('test')
+        state = State('test_state', on_enter='test_func')
+        state.enter(event)
+        self.assertTrue(event.machine.test)
 
     def test_condition(self):
-        event_data = self.make_event_data()
-        transition = Transition(source=None, dest=None, trigger=None, condition='condition_true')
-        self.assertTrue(transition.eval_condition(event_data))
+        event = self.make_event('test')
+        transition = Transition(source=None, dest=None, event=None, condition='condition_true')
+        self.assertTrue(transition.eval_condition(event))
         transition.condition = 'condition_false'
-        self.assertFalse(transition.eval_condition(event_data))
+        self.assertFalse(transition.eval_condition(event))
 
     def test_get_state(self):
-        event_data = self.make_event_data()
-        self.assertEqual(event_data.machine.get_state('A').name, 'A')
+        event = self.make_event('test')
+        self.assertEqual(event.machine.get_state('A').name, 'A')
 
     def test_set_state(self):
-        event_data = self.make_event_data()
-        self.assertEqual(event_data.machine.state, state_A)
-        event_data.machine.set_state('B')
-        self.assertEqual(event_data.machine.state, state_B)
-
+        machine = TestMachine(states=states, transitions=transitions)
+        self.assertEqual(machine.state, state_A)
+        machine.set_state('B')
+        self.assertEqual(machine.state, state_B)
 
     def test_get_matched_transitions(self):
-        event_data = self.make_event_data()
-        self.assertIs(event_data.machine.state, state_A)
-        t = event_data.machine.get_matched_transitions(trigger='A2B',
-                                                       state=event_data.machine.state,
-                                                       event_data=event_data)
+        machine = TestMachine(states=states, transitions=transitions)
+        self.assertIs(machine.state, state_A)
+        t = machine.get_matched_transitions(event='A2B', state=machine.state)
         self.assertEqual(len(t), 1)
         self.assertEqual(t[0].dest, 'B')
 
     def test_trigger_event(self):
-        event_data = self.make_event_data()
-        self.assertIs(event_data.machine.state, state_A)
-        event_data.machine.trigger_event('A2B', event_data)
-        self.assertEqual(event_data.machine.state, state_B)
+        machine = TestMachine(states=states, transitions=transitions)
+        self.assertIs(machine.state, state_A)
+        machine.trigger_event('A2B')
+        self.assertEqual(machine.state, state_B)
 
+    def test_event_trigger(self):
+        event = self.make_event('A2B')
+        event.trigger()
+        self.assertEqual(event.machine.state, state_B)
 
 if __name__ == '__main__':
     unittest.main()

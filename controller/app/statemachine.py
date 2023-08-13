@@ -13,36 +13,41 @@ class State(object):
     def exit(self, event_data):
         event_data.machine.callback(self.on_exit, event_data)
 
-class EventData(object):
-    def __init__(self, machine):
+class Event(object):
+    def __init__(self, name, machine, **kwargs):
+        self.name = name
         self.machine = machine
-        pass
+        self.kwargs = kwargs
+
+    def trigger(self):
+        self.machine.trigger_event(self)
+
 
 class Transition(object):
-    def __init__(self, source, dest, trigger, before=None, after=None, condition=None):
+    def __init__(self, source, dest, event, before=None, after=None, condition=None):
         self.source = source
         self.dest = dest
-        self.trigger = trigger
+        self.event = event.name if isinstance(event, Event) else event
         self.before = before
         self.after = after
         self.condition = condition
 
-    def eval_condition(self, event_data):
+    def eval_condition(self, event):
         if self.condition:
-            return event_data.machine.callback(self.condition, event_data)
+            return event.machine.callback(self.condition, event)
         return True
 
-    def execute(self, event_data):
-        machine = event_data.machine
+    def execute(self, event):
+        machine = event.machine
         source = machine.get_state(self.source)
         dest = machine.get_state(self.dest)
 
-        if self.eval_condition(event_data):
-            machine.callback(self.before, event_data)
-            machine.callback(source.on_exit, event_data)
+        if self.eval_condition(event):
+            machine.callback(self.before, event)
+            machine.callback(source.on_exit, event)
             machine.set_state(dest)
-            machine.callback(dest.on_enter, event_data)
-            machine.callback(self.after, event_data)
+            machine.callback(dest.on_enter, event)
+            machine.callback(self.after, event)
 
 
 class StateMachine(object):
@@ -75,9 +80,19 @@ class StateMachine(object):
             state = self.get_state(state)
         self._state = state
 
-    def get_matched_transitions(self, trigger, state, event_data):
+    def get_event(self, event, **kwargs):
+        if isinstance(event, Event):
+            event.machine = self
+            event.kwargs.update(kwargs)
+        else:
+            event = Event(name=event, machine=self, **kwargs)
+        return event
+
+    def get_matched_transitions(self, event, state):
         state = self.get_state(state)
-        return [t for t in self.transitions if t.trigger == trigger and self.get_state(t.source) == state]
+        if isinstance(event, Event):
+            event = event.name
+        return [t for t in self.transitions if t.event == event and self.get_state(t.source) == state]
 
     def add_states(self, states):
         for s in states:
@@ -86,44 +101,13 @@ class StateMachine(object):
             else:
                 self.states[s] = State(name=s)
 
-    def trigger_event(self, event, event_data):
-        event_data.machine = self
-        transitions = self.get_matched_transitions(trigger=event, state=self.state, event_data=event_data)
+    def trigger_event(self, event, **kwargs):
+        event = self.get_event(event, **kwargs)
+        transitions = self.get_matched_transitions(event=event, state=self.state)
         for t in transitions:
-            t.execute(event_data)
-
+            t.execute(event)
 
     @classmethod
-    def callback(cls, func, event_data):
-        func = cls.resolve_callable(func, event_data)
-        return func(event_data) if func else None
-
-    @staticmethod
-    def resolve_callable(func, event_data):
-        """ Converts a to a callable member of a state machine.
-            If func is not a string it will be returned unaltered.
-        Args:
-            func (str or callable): Property name, method name or a path to a callable
-        Returns:
-            callable function resolved from string or func
-        """
-
-        return getattr(event_data.machine, func) if func else None
-        # if isinstance(func, string_types):
-        #     try:
-        #         func = getattr(event_data.model, func)
-        #         if not callable(func):  # if a property or some other not callable attribute was passed
-        #             def func_wrapper(*_, **__):  # properties cannot process parameters
-        #                 return func
-        #             return func_wrapper
-        #     except AttributeError:
-        #         try:
-        #             module_name, func_name = func.rsplit('.', 1)
-        #             module = __import__(module_name)
-        #             for submodule_name in module_name.split('.')[1:]:
-        #                 module = getattr(module, submodule_name)
-        #             func = getattr(module, func_name)
-        #         except (ImportError, AttributeError, ValueError):
-        #             raise AttributeError("Callable with name '%s' could neither be retrieved from the passed "
-        #                                  "model nor imported from a module." % func)
-        # return func
+    def callback(cls, func, event):
+        func = getattr(event.machine, func) if func else None
+        return func(event) if func else None
