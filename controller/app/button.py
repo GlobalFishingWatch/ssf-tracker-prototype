@@ -22,12 +22,12 @@ class Button(StateMachine):
         Transition('releasing', 'released', 'timeout'),
     ]
 
-    def __init__(self, bounce_timeout_ms=10, on_press_event=None, on_release_event=None, timer=None):
+    def __init__(self, bounce_timeout_ms=10, on_press_event=None, on_release_event=None, timer=None, **kwargs):
         self.bounce_timeout_ms = bounce_timeout_ms
         self.on_press_event = on_press_event
         self.on_release_event = on_release_event
         self.bounce_timer = timer if timer else Timer(event=self.get_event('timeout'), duration_ms=bounce_timeout_ms)
-        super(Button, self).__init__(states=self.states, transitions=self.transitions)
+        super(Button, self).__init__(states=self.states, transitions=self.transitions, **kwargs)
 
     def start_timer(self, event_data):
         self.bounce_timer.reset()

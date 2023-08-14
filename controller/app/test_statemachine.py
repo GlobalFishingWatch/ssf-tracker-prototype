@@ -86,5 +86,17 @@ class TestStateMachine(unittest.TestCase):
         event.trigger()
         self.assertEqual(event.machine.state, state_B)
 
+    def test_name(self):
+        machine = TestMachine(states=states, transitions=transitions)
+        self.assertEqual(machine.name, 'TestMachine')
+
+    def test_logging(self):
+        if hasattr(self, 'assertLogs'):
+            # we don't have assertLogs in micropython, so skip this test
+            machine = TestMachine(states=states, transitions=transitions)
+            with self.assertLogs('root', level='DEBUG') as cm:
+                machine.set_state('B')
+            self.assertEqual(cm.output, ['DEBUG:root:TestMachine: A => B'])
+
 if __name__ == '__main__':
     unittest.main()

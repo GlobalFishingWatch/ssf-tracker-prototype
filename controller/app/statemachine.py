@@ -1,4 +1,5 @@
 # A basic state machine
+import logging
 
 
 class State(object):
@@ -51,7 +52,9 @@ class Transition(object):
 
 
 class StateMachine(object):
-    def __init__(self, states=None, transitions=None, initial_state=None):
+    def __init__(self, states=None, transitions=None, initial_state=None, name=None, log=None):
+        self.name = name if name else self.__class__.__name__
+        self.log = log if log else logging.getLogger('root')
         self.states = {}
         self._state = None
         self.transitions = transitions if transitions else []
@@ -63,7 +66,7 @@ class StateMachine(object):
         # if no valid initial state is provided, use the fist state in the list
         if not initial_state and states:
             initial_state = states[0]
-        self.set_state(initial_state)
+        self._state = self.get_state(initial_state)
 
     @property
     def state(self):
@@ -73,11 +76,12 @@ class StateMachine(object):
         if isinstance(state, State):
             return state
         else:
-            return self.states.get(state, None)
+            return self.states[state]
 
     def set_state(self, state):
         if not isinstance(state, State):
             state = self.get_state(state)
+        self.log.debug(f'{self.name}: {self._state.name} => {state.name}')
         self._state = state
 
     def get_event(self, event, **kwargs):
