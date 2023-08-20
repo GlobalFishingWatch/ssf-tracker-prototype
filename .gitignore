@@ -34,4 +34,8 @@
 # Pycharm
 .idea
 
+#python
 __pycache__
+
+#osx
+.DS_Store

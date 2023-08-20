@@ -30,56 +30,50 @@ transitions = [
     Transition(source='A', dest='B', event='A2B'),
     Transition(source='B', dest='C', event='B2C'),
     Transition(source='C', dest='A', event='C2A'),
+    Transition(event='test', after='test_func')
 ]
 
 class TestStateMachine(unittest.TestCase):
     def setUp(self):
-        pass
+        self.machine = TestMachine(states=states, transitions=transitions)
+        self.test_event =self.make_event('test')
 
     def make_event(self, name='test'):
-        machine = TestMachine(states=states, transitions=transitions)
-        return Event(name=name, machine=machine)
+        return Event(name=name, machine=self.machine)
 
     def test_callback(self):
-        event = self.make_event('test')
-        event.machine.callback('test_func', event)
-        self.assertTrue(event.machine.test)
+        self.test_event.machine.callback('test_func', self.test_event)
+        self.assertTrue(self.machine.test)
 
     def test_state_on_enter(self):
-        event = self.make_event('test')
         state = State('test_state', on_enter='test_func')
-        state.enter(event)
-        self.assertTrue(event.machine.test)
+        state.enter(self.test_event)
+        self.assertTrue(self.machine.test)
 
     def test_condition(self):
-        event = self.make_event('test')
         transition = Transition(source=None, dest=None, event=None, condition='condition_true')
-        self.assertTrue(transition.eval_condition(event))
+        self.assertTrue(transition.eval_condition(self.test_event))
         transition.condition = 'condition_false'
-        self.assertFalse(transition.eval_condition(event))
+        self.assertFalse(transition.eval_condition(self.test_event))
 
     def test_get_state(self):
-        event = self.make_event('test')
-        self.assertEqual(event.machine.get_state('A').name, 'A')
+        self.assertEqual(self.machine.get_state('A').name, 'A')
 
     def test_set_state(self):
-        machine = TestMachine(states=states, transitions=transitions)
-        self.assertEqual(machine.state, state_A)
-        machine.set_state('B')
-        self.assertEqual(machine.state, state_B)
+        self.assertEqual(self.machine.state, state_A)
+        self.machine.set_state('B')
+        self.assertEqual(self.machine.state, state_B)
 
     def test_get_matched_transitions(self):
-        machine = TestMachine(states=states, transitions=transitions)
-        self.assertIs(machine.state, state_A)
-        t = machine.get_matched_transitions(event='A2B', state=machine.state)
+        self.assertIs(self.machine.state, state_A)
+        t = self.machine.get_matched_transitions(event='A2B', state=self.machine.state)
         self.assertEqual(len(t), 1)
         self.assertEqual(t[0].dest, 'B')
 
     def test_trigger_event(self):
-        machine = TestMachine(states=states, transitions=transitions)
-        self.assertIs(machine.state, state_A)
-        machine.trigger_event('A2B')
-        self.assertEqual(machine.state, state_B)
+        self.assertIs(self.machine.state, state_A)
+        self.machine.trigger_event('A2B')
+        self.assertEqual(self.machine.state, state_B)
 
     def test_event_trigger(self):
         event = self.make_event('A2B')
@@ -87,16 +81,23 @@ class TestStateMachine(unittest.TestCase):
         self.assertEqual(event.machine.state, state_B)
 
     def test_name(self):
-        machine = TestMachine(states=states, transitions=transitions)
-        self.assertEqual(machine.name, 'TestMachine')
+        self.assertEqual(self.machine.name, 'TestMachine')
 
+    @unittest.skipUnless(hasattr(unittest.TestCase,'assertLogs'), "Can't use assertLogs in micropython")
     def test_logging(self):
-        if hasattr(self, 'assertLogs'):
-            # we don't have assertLogs in micropython, so skip this test
-            machine = TestMachine(states=states, transitions=transitions)
-            with self.assertLogs('root', level='DEBUG') as cm:
-                machine.set_state('B')
-            self.assertEqual(cm.output, ['DEBUG:root:TestMachine: A => B'])
+        # we don't have assertLogs in micropython, so skip this test
+        with self.assertLogs('root', level='DEBUG') as cm:
+            self.machine.set_state('B')
+        self.assertEqual(cm.output, ['DEBUG:root:TestMachine: A => B'])
+
+    def test_any_state_transition(self):
+        self.assertFalse(self.machine.test)
+        self.test_event.trigger()
+        self.assertTrue(self.machine.test)
+
+    def test_invalid_event(self):
+        with self.assertRaises(ValueError):
+            self.machine.trigger_event('invalid')
 
 if __name__ == '__main__':
     unittest.main()

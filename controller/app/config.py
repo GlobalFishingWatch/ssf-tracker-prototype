@@ -2,8 +2,10 @@ import os
 import json
 import logging
 
+from timer import Timer
 
-def load_cofig(source_file_name):
+
+def load_config(source_file_name):
     try:
         with open(source_file_name, 'r') as f:
             return json.load(f)
@@ -35,3 +37,6 @@ def configure_logger(config):
         file_handler.setFormatter(default_handler.formatter)
         log.addHandler(file_handler)
     return log
+
+def default_logger():
+    return logging.getLogger('root')

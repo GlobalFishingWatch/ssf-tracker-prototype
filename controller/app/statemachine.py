@@ -1,6 +1,5 @@
 # A basic state machine
-import logging
-
+from config import default_logger
 
 class State(object):
     def __init__(self, name, on_enter=None, on_exit=None):
@@ -23,9 +22,18 @@ class Event(object):
     def trigger(self):
         self.machine.trigger_event(self)
 
+class MockEvent(object):
+    # Event class for testing.  Does not do anything other than count the
+    # number of times that the event has benn triggered
+    def __init__(self):
+        self.trigger_count = 0
+
+    def trigger(self):
+        self.trigger_count += 1
+
 
 class Transition(object):
-    def __init__(self, source, dest, event, before=None, after=None, condition=None):
+    def __init__(self, event, source=None, dest=None, before=None, after=None, condition=None):
         self.source = source
         self.dest = dest
         self.event = event.name if isinstance(event, Event) else event
@@ -40,24 +48,24 @@ class Transition(object):
 
     def execute(self, event):
         machine = event.machine
-        source = machine.get_state(self.source)
-        dest = machine.get_state(self.dest)
 
         if self.eval_condition(event):
             machine.callback(self.before, event)
-            machine.callback(source.on_exit, event)
-            machine.set_state(dest)
-            machine.callback(dest.on_enter, event)
+            if self.source:
+                machine.callback(machine.get_state(self.source).on_exit, event)
+            if self.dest:
+                machine.set_state(self.dest)
+                machine.callback( machine.get_state(self.dest).on_enter, event)
             machine.callback(self.after, event)
 
 
 class StateMachine(object):
     def __init__(self, states=None, transitions=None, initial_state=None, name=None, log=None):
         self.name = name if name else self.__class__.__name__
-        self.log = log if log else logging.getLogger('root')
+        self.log = log if log else default_logger()
         self.states = {}
         self._state = None
-        self.transitions = transitions if transitions else []
+        self._transitions = transitions if transitions else []
 
         if states:
             self.add_states(states)
@@ -85,6 +93,7 @@ class StateMachine(object):
         self._state = state
 
     def get_event(self, event, **kwargs):
+        self.get_event_transitions(event)  # will raise exception if there are no matching transitions
         if isinstance(event, Event):
             event.machine = self
             event.kwargs.update(kwargs)
@@ -92,11 +101,23 @@ class StateMachine(object):
             event = Event(name=event, machine=self, **kwargs)
         return event
 
+    # get all transitions that are triggered by this event
+    def get_event_transitions(self, event):
+        if isinstance(event, Event):
+            event = event.name
+        event_transitions = [t for t in self._transitions if t.event == event]
+        if not event_transitions:
+            raise ValueError(f'State machine "{self.name}" does not have any transitions with event "{event}"')
+        return event_transitions
+
+    # get all transitions triggered but the given event that have the source state matching the
+    # current machine state
     def get_matched_transitions(self, event, state):
         state = self.get_state(state)
         if isinstance(event, Event):
             event = event.name
-        return [t for t in self.transitions if t.event == event and self.get_state(t.source) == state]
+        event_transitions = self.get_event_transitions(event)
+        return [t for t in event_transitions if t.source is None or self.get_state(t.source) == state]
 
     def add_states(self, states):
         for s in states:
@@ -107,6 +128,7 @@ class StateMachine(object):
 
     def trigger_event(self, event, **kwargs):
         event = self.get_event(event, **kwargs)
+        self.log.debug(f'{self.name}: event {event.name}')
         transitions = self.get_matched_transitions(event=event, state=self.state)
         for t in transitions:
             t.execute(event)

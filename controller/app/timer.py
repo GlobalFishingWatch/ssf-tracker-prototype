@@ -11,11 +11,12 @@ class Timer(object):
         self.event = event
         self.active = False
 
-    def _get_time_ms(self):
-        return time.time() * 1000
+    @staticmethod
+    def current_time_ms():
+        return time.time_ns() // 1000000
 
     def is_expired(self):
-        return self._get_time_ms() >= self._deadline if self.active else False
+        return self.current_time_ms() >= self._deadline if self.active else False
 
     def check(self):
         if self.is_expired():
@@ -38,7 +39,7 @@ class Timer(object):
             self.recurring = recurring
         if event is not None:
             self.event = event
-        self._deadline = self._get_time_ms() + self.duration_ms
+        self._deadline = self.current_time_ms() + self.duration_ms
         self.active = True
         self.active_timers.add(self)
 
@@ -57,5 +58,5 @@ class ManualTimer(Timer):
         self.time_ms = 0
         super(ManualTimer, self).__init__(**kwargs)
 
-    def _get_time_ms(self):
+    def current_time_ms(self):
         return self.time_ms

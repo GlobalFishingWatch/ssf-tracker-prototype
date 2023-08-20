@@ -23,14 +23,14 @@ class TestButton(unittest.TestCase):
         self.assertEqual(button.state.name, 'pressing')
         button.trigger_event('btn_up')
         self.assertEqual(button.state.name, 'released')
-        self.assertEqual(button.on_release_event.trigger_count, 1)
+        self.assertEqual(button.on_release_event.trigger_count, 0)
         button.trigger_event('btn_down')
         button.trigger_event('timeout')
         self.assertEqual(button.state.name, 'pressed')
         self.assertEqual(button.on_press_event.trigger_count, 1)
         button.trigger_event('btn_up')
         button.trigger_event('timeout')
-        self.assertEqual(button.on_release_event.trigger_count, 2)
+        self.assertEqual(button.on_release_event.trigger_count, 1)
 
     def test_button_timing(self):
         button = Button(on_press_event=MockEvent(),

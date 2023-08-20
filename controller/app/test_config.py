@@ -5,7 +5,7 @@ import tempfile
 import json
 
 
-from config import load_cofig
+from config import load_config
 from config import save_config
 
 
@@ -31,11 +31,11 @@ class TestConfig(unittest.TestCase):
         # return Path(self.test_dir.name) / 'config.json'
 
     def test_load_config(self):
-        config = load_cofig(self._file_name())
+        config = load_config(self._file_name())
         self.assertEqual(config, self.test_cfg)
 
     def test_load_config_not_fount(self):
-        config = load_cofig('not-found.json')
+        config = load_config('not-found.json')
         self.assertEqual(config, {})
 
     def test_save_config(self):
