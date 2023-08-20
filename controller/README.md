@@ -107,9 +107,18 @@ You may need to hit ctrl-B to get a the `>>>` prompt
 
 ### Run the unit tests in the REPL
 ```python
->>> import test
+>>> import test_esp32
 >>> test.run_all_tests_esp32()
 ```
+
+### Now finally, run the App!
+From the repl
+```python
+>>> import main
+>>> main.app.run()
+```
+ctrl-c to break
+
 
 
 ## SOME RANDOM NOTES BELOW
