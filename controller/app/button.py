@@ -44,5 +44,3 @@ class Button(StateMachine):
         self.bounce_timer.cancel()
         if self.on_release_event:
             self.on_release_event.trigger()
-
-

@@ -2,7 +2,7 @@ import unittest
 
 from button import Button
 from timer import ManualTimer
-from statemachine import Event
+
 
 class MockEvent(object):
     def __init__(self):
@@ -35,7 +35,7 @@ class TestButton(unittest.TestCase):
     def test_button_timing(self):
         button = Button(on_press_event=MockEvent(),
                         on_release_event=MockEvent())
-        button.bounce_timer=ManualTimer(event=button.get_event('timeout'))
+        button.bounce_timer = ManualTimer(event=button.get_event('timeout'))
         button.trigger_event('btn_down')
         button.bounce_timer.time_ms += button.bounce_timeout_ms
         button.bounce_timer.check()

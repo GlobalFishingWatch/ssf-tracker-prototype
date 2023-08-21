@@ -11,14 +11,18 @@ class TestMachine (StateMachine):
         self.test = False
         super(TestMachine, self).__init__(**kwargs)
 
-    def test_func(self, event_data):
+    def test_func(self, event):
         self.test = True
-    def test_condition(self, event_data):
+
+    def test_condition(self, event):
         return self.test
-    def condition_true(self, event_data):
+
+    def condition_true(self, event):
         return True
-    def condition_false(self, event_data):
+
+    def condition_false(self, event):
         return False
+
 
 state_A = State('A')
 state_B = State('B')
@@ -33,10 +37,11 @@ transitions = [
     Transition(event='test', after='test_func')
 ]
 
+
 class TestStateMachine(unittest.TestCase):
     def setUp(self):
         self.machine = TestMachine(states=states, transitions=transitions)
-        self.test_event =self.make_event('test')
+        self.test_event = self.make_event('test')
 
     def make_event(self, name='test'):
         return Event(name=name, machine=self.machine)
@@ -83,7 +88,7 @@ class TestStateMachine(unittest.TestCase):
     def test_name(self):
         self.assertEqual(self.machine.name, 'TestMachine')
 
-    @unittest.skipUnless(hasattr(unittest.TestCase,'assertLogs'), "Can't use assertLogs in micropython")
+    @unittest.skipUnless(hasattr(unittest.TestCase, 'assertLogs'), "Can't use assertLogs in micropython")
     def test_logging(self):
         # we don't have assertLogs in micropython, so skip this test
         with self.assertLogs('root', level='DEBUG') as cm:
@@ -98,6 +103,7 @@ class TestStateMachine(unittest.TestCase):
     def test_invalid_event(self):
         with self.assertRaises(ValueError):
             self.machine.trigger_event('invalid')
+
 
 if __name__ == '__main__':
     unittest.main()

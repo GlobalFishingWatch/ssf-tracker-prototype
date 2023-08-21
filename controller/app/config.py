@@ -1,4 +1,3 @@
-import sys
 import json
 import logging
 
@@ -13,6 +12,7 @@ def load_config(source_file_name):
     except OSError:
         return {}
 
+
 def save_config(config, dest_file_name):
     with open(dest_file_name, 'w') as f:
         json.dump(config, f)
@@ -20,7 +20,6 @@ def save_config(config, dest_file_name):
 
 class LogFormatter(logging.Formatter):
     def formatTime(self, record, datefmt):
-        # record.asctime = f'{Timer.current_time_ms()/1000}'
         return f'{Timer.current_time_ms()/1000:.3f}'
 
 
@@ -30,6 +29,7 @@ log_levels = {
     'WARNING': logging.WARNING,
     'ERROR': logging.ERROR
 }
+
 
 def configure_logger(config):
     # get the log level to use
@@ -47,7 +47,7 @@ def configure_logger(config):
     logger.addHandler(stream_handler)
 
     # create a handler that writes to a file
-    filename=config.get('log-file')
+    filename = config.get('log-file')
     if filename:
         # default_handler = log.handlers[0]
         file_handler = logging.FileHandler(filename)
@@ -56,6 +56,7 @@ def configure_logger(config):
         logger.addHandler(file_handler)
 
     return logger
+
 
 def default_logger():
     return logging.getLogger('root')

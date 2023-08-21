@@ -1,6 +1,7 @@
 # A basic state machine
 from config import default_logger
 
+
 class State(object):
     def __init__(self, name, on_enter=None, on_exit=None):
         self.name = name
@@ -13,6 +14,7 @@ class State(object):
     def exit(self, event_data):
         event_data.machine.callback(self.on_exit, event_data)
 
+
 class Event(object):
     def __init__(self, name, machine, **kwargs):
         self.name = name
@@ -21,6 +23,7 @@ class Event(object):
 
     def trigger(self):
         self.machine.trigger_event(self)
+
 
 class MockEvent(object):
     # Event class for testing.  Does not do anything other than count the
@@ -55,7 +58,7 @@ class Transition(object):
                 machine.callback(machine.get_state(self.source).on_exit, event)
             if self.dest:
                 machine.set_state(self.dest)
-                machine.callback( machine.get_state(self.dest).on_enter, event)
+                machine.callback(machine.get_state(self.dest).on_enter, event)
             machine.callback(self.after, event)
 
 

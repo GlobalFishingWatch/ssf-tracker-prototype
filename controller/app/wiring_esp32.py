@@ -25,7 +25,7 @@ micropython.alloc_emergency_exception_buf(100)
 #    btn.irq(handler=handler.handle_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING)
 #
 class IrqPinEventHandler(object):
-    def __init__(self, pin_rising_event=None, pin_falling_event=None):
+    def __init__(self, event=None):
         self.schedule_fn = self.dispatch
         self.event = event
 
@@ -43,11 +43,9 @@ class IrqPinEventHandler(object):
     def dispatch(self, pin_flags):
         # trigger the event
         if pin_flags & Pin.IRQ_RISING:
-            self.pin_rising_event.trigger()
+            self.event.trigger()
         elif pin_flags & Pin.IRQ_FALLING:
-            self.pin_falling_event.trigger()
-
-
+            self.event.trigger()
 
 
 class WiringESP32(Wiring):
@@ -64,12 +62,6 @@ class WiringESP32(Wiring):
         self._btn1.irq(handler=self.btn1_irq_handler,
                        trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING,
                        wake=machine.SLEEP | machine.DEEPSLEEP)
-
-        # self._btn1_up_irq_handler = IrqEventHandler(event=self.btn_up_event)
-        # self._btn1_down_irq_handler = IrqEventHandler(event=self.btn_down_event)
-        # self._btn1.irq(handler=self._btn1_up_irq_handler.handle_irq, trigger=Pin.IRQ_RISING)
-        # self._btn1.irq(handler=self._btn1_down_irq_handler.handle_irq, trigger=Pin.IRQ_FALLING)
-
 
     def btn1_irq_handler(self, pin):
         # handle the immediate interrupt

@@ -1,7 +1,6 @@
 import unittest
 import tempfile
 import json
-import sys
 
 
 from config import load_config
@@ -47,12 +46,12 @@ class TestConfig(unittest.TestCase):
         with open(self.config_file_name(), 'r') as f:
             self.assertEqual(json.load(f), self.test_cfg)
 
-    @unittest.skipUnless(hasattr(unittest.TestCase,'assertRegex'), "Can't use assertRegex in micropython")
+    @unittest.skipUnless(hasattr(unittest.TestCase, 'assertRegex'), "Can't use assertRegex in micropython")
     def test_log_formatter(self):
         formatter = LogFormatter()
         self.assertRegex(formatter.formatTime(datefmt=None, record=None), '[\\d]+\\.[\\d]{3}')
 
-    @unittest.skipUnless(hasattr(unittest.TestCase,'assertRegex'), "Can't use assertRegex in micropython")
+    @unittest.skipUnless(hasattr(unittest.TestCase, 'assertRegex'), "Can't use assertRegex in micropython")
     def test_file_logger(self):
         config = {'log-file': self.log_file_name()}
         logger = configure_logger(config)
@@ -68,6 +67,7 @@ class TestConfig(unittest.TestCase):
         with open(self.log_file_name()) as f:
             output = f.read()
         self.assertRegex(output, '[\\d]+\\.[\\d]{3} test')
+
 
 if __name__ == '__main__':
     unittest.main()

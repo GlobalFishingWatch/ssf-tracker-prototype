@@ -27,4 +27,3 @@ log.info('Starting App...')
 app = App(WiringESP32, log=log, config=app_config)
 app.initialize()
 # app.run()
-

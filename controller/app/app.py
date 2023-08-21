@@ -2,7 +2,6 @@
 
 from config import default_logger
 
-from wiring import Wiring
 from statemachine import StateMachine
 from statemachine import State
 from statemachine import Transition
@@ -32,7 +31,6 @@ class App(StateMachine):
                                  btn1_up_event=self.button1.get_event('btn_up'),
                                  btn1_down_event=self.button1.get_event('btn_down'))
 
-
     def initialize(self):
         self.log.debug(f'{self.name} initialize...')
         self.wiring.initialize()
@@ -42,7 +40,6 @@ class App(StateMachine):
         while True:
             Timer.check_active_timers()
             # self.wiring.lightsleep(self.config.get('loop_sleep_time_ms', 10))
-
 
     def on_btn1_pressed(self, event):
         self.wiring.led1 = 1

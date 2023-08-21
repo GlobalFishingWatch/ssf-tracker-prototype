@@ -2,6 +2,7 @@ import unittest
 from wiring import MockWiring
 from statemachine import MockEvent
 
+
 class TestWiring(unittest.TestCase):
 
     def setUp(self):
@@ -23,6 +24,7 @@ class TestWiring(unittest.TestCase):
 
     def test_sleep(self):
         self.wiring.lightsleep(time_ms=10)
+
 
 if __name__ == '__main__':
     unittest.main()

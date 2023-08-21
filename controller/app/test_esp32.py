@@ -19,6 +19,5 @@ class TestWiringEsp32(unittest.TestCase):
         self.wiring.lightsleep(time_ms=10)
 
 
-
 if __name__ == '__main__':
     unittest.main()

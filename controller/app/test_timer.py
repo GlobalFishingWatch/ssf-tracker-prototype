@@ -59,5 +59,6 @@ class TestTimer(unittest.TestCase):
         t = ManualTimer()
         t.cancel()
 
+
 if __name__ == '__main__':
     unittest.main()

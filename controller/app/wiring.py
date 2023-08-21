@@ -6,8 +6,8 @@
 # for testing outside the device, use MockWiring
 # For use on the device, you should use a hardware specific subclass of Wiring
 
-import sys
 import time
+
 
 class Wiring(object):
     """
@@ -21,6 +21,8 @@ class Wiring(object):
         self.config = config
         self.btn_up_event = btn1_up_event
         self.btn_down_event = btn1_down_event
+        self._led1 = None
+        self._btn1 = None
 
     def initialize(self):
         raise NotImplementedError('You must create a subclass of Wiring that implements initialize()')
@@ -42,10 +44,10 @@ class Wiring(object):
             event.trigger()
 
     def lightsleep(self, time_ms):
-         if hasattr(time, 'sleep_ms'):
-             time.sleep_ms(time_ms)
-         else:
-             time.sleep(time_ms / 1000)
+        if hasattr(time, 'sleep_ms'):
+            time.sleep_ms(time_ms)
+        else:
+            time.sleep(time_ms / 1000)
 
 
 class MockWiring(Wiring):
@@ -53,24 +55,18 @@ class MockWiring(Wiring):
     Non-functional implementation of Wiring for use in unit testing
     """
     class MockPin(object):
-        def __init__(self, value = 0, irq_handler = None):
+        def __init__(self, value=0, irq_handler=None):
             self._value = value
             self.irq_handler = irq_handler
             # self.irq_rising = irq_rising
             # self.irq_falling = irq_falling
 
-        def value(self, new_value = None):
+        def value(self, new_value=None):
             if new_value is not None:
                 old_value = self._value
                 self._value = new_value
                 if (old_value != new_value) and self.irq_handler is not None:
                     self.irq_handler(self)
-
-
-                # if new_value > old_value and self.irq_rising:
-                #     self.irq_rising.handle_irq(self)
-                # elif new_value < old_value and self.irq_falling:
-                #     self.irq_falling.handle_irq(self)
 
             return self._value
 
@@ -87,15 +83,12 @@ class MockWiring(Wiring):
     def initialize(self):
         self._led1 = MockWiring.MockPin()
         self._btn1 = MockWiring.MockPin(1, irq_handler=self.btn1_irq_handler)
-                                        # irq_rising=MockWiring.MockIrqEventHandler(event=self.btn_up_event),
-                                        # irq_falling=MockWiring.MockIrqEventHandler(event=self.btn_down_event))
 
     def btn1_irq_handler(self, pin):
         pin_value = pin.value()
-        if pin.value() == 0:
+        if pin_value == 0:
             self.trigger_event(self.btn_down_event)
-        elif pin.value() == 1:
-
+        elif pin_value == 1:
             self.trigger_event(self.btn_up_event)
 
     @property
@@ -104,4 +97,4 @@ class MockWiring(Wiring):
 
     @btn1.setter
     def btn1(self, value):
-        return self._btn1.value(value)
+        self._btn1.value(value)

@@ -2,6 +2,7 @@ import unittest
 from app import App
 from wiring import MockWiring
 
+
 class TestApp(unittest.TestCase):
     def setUp(self):
         config = {}
@@ -22,6 +23,7 @@ class TestApp(unittest.TestCase):
         self.app.wiring.btn1 = 1    # button up
         self.app.button1.bounce_timer.trigger_event()   # bounce timeout
         self.assertEqual(self.app.wiring.led1, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

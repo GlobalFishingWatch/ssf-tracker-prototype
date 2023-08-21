@@ -25,6 +25,7 @@ from test_statemachine import TestStateMachine
 from test_timer import TestTimer
 from test_wiring import TestWiring
 
+
 def run_all_tests_esp32():
     suite = unittest.TestSuite()
     suite.addTest(TestApp())
@@ -40,6 +41,7 @@ def run_all_tests_esp32():
 
     runner = unittest.TextTestRunner()
     runner.run(suite)
+
 
 if __name__ == '__main__':
     unittest.main()
