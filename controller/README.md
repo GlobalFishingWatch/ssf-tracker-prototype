@@ -56,6 +56,7 @@ micropython -m mip install unittest
 micropython -m mip install tempfile
 micropython -m mip install logging
 micropython -m mip install shutil
+micropython -m mip install ujson
 ```
 
 Now you should be able to run the unit tests with micropython
@@ -73,6 +74,7 @@ mpremote mip install unittest
 mpremote mip install tempfile
 mpremote mip install logging
 mpremote mip install shutil
+mpremote mip install ujson
 ```
 
 ### Copy files to the esp32 device

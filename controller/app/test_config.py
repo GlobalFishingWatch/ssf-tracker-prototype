@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import json
+import ujson as json
 
 
 from config import load_config

@@ -2,3 +2,4 @@ unittest
 unittest-discover
 tempfile
 shutil
+ujson
