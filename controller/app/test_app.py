@@ -16,7 +16,6 @@ class TestApp(unittest.TestCase):
 
     def test_app_btn_down(self):
         self.assertEqual(self.app.wiring.led1, 0)
-        print(self.app.button1.state.name)
         self.app.wiring.btn1 = 0    # button down
         self.app.button1.bounce_timer.trigger_event()   # bounce timeout
         self.assertEqual(self.app.wiring.led1, 1)
