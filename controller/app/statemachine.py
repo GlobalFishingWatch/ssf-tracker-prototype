@@ -1,6 +1,6 @@
 # A basic state machine
 from config import default_logger
-
+from collections import deque
 
 class State(object):
     def __init__(self, name, on_enter=None, on_exit=None):
@@ -16,23 +16,41 @@ class State(object):
 
 
 class Event(object):
+    event_queue = deque()
+
     def __init__(self, name, machine, **kwargs):
         self.name = name
         self.machine = machine
         self.kwargs = kwargs
 
-    def trigger(self):
+    def _trigger(self):
+        # Trigger the event on the statemachine immediately
         self.machine.trigger_event(self)
 
+    def trigger(self):
+        # put the event in the event queue to be executed on the next call to trigger_scheduled_events()
+        self.event_queue.appendleft(self)
 
-class MockEvent(object):
+    @classmethod
+    def trigger_scheduled_events(cls):
+        while cls.event_queue:
+            event = cls.event_queue.popleft()
+            event._trigger()
+
+
+
+class MockEvent(Event):
     # Event class for testing.  Does not do anything other than count the
     # number of times that the event has benn triggered
-    def __init__(self):
+    def __init__(self, name):
         self.trigger_count = 0
+        super(MockEvent, self).__init__(name=name, machine=None)
+
+    def _trigger(self):
+        pass
 
     def trigger(self):
-        self.trigger_count += 1
+            self.trigger_count += 1
 
 
 class Transition(object):

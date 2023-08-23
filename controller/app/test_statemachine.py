@@ -82,7 +82,7 @@ class TestStateMachine(unittest.TestCase):
 
     def test_event_trigger(self):
         event = self.make_event('A2B')
-        event.trigger()
+        event._trigger()
         self.assertEqual(event.machine.state, state_B)
 
     def test_name(self):
@@ -97,7 +97,7 @@ class TestStateMachine(unittest.TestCase):
 
     def test_any_state_transition(self):
         self.assertFalse(self.machine.test)
-        self.test_event.trigger()
+        self.test_event._trigger()
         self.assertTrue(self.machine.test)
 
     def test_invalid_event(self):

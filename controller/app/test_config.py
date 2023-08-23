@@ -7,6 +7,7 @@ from config import load_config
 from config import save_config
 from config import LogFormatter
 from config import configure_logger
+from config import default_config
 from logging import FileHandler
 
 
@@ -17,6 +18,7 @@ class TestConfig(unittest.TestCase):
         self.test_cfg = {
             'test': 123
         }
+        self.test_cfg.update(default_config)
         with open(self.config_file_name(), 'w') as f:
             json.dump(self.test_cfg, f)
 
@@ -39,7 +41,7 @@ class TestConfig(unittest.TestCase):
 
     def test_load_config_not_fount(self):
         config = load_config('not-found.json')
-        self.assertEqual(config, {})
+        self.assertEqual(config, default_config)
 
     def test_save_config(self):
         save_config(self.test_cfg, self.config_file_name())

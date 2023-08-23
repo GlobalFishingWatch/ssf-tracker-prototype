@@ -1,16 +1,27 @@
 import ujson as json
 import logging
 
-
 from timer import Timer
 
+# DEFAULT CONFIG SETTINGS
+default_config = {
+    'log-level': 'DEBUG',
+    'log-file': 'log.txt',
+    'loop_sleep_time_ms': 10,
+    'LED1_PIN': 5,
+    'BTN1_PIN': 4,
+    'IDLE_TIMEOUT_MS': 10000
+}
 
 def load_config(source_file_name):
+    config = default_config.copy()
     try:
         with open(source_file_name, 'r') as f:
-            return json.load(f)
+            config.update(json.load(f))
     except OSError:
-        return {}
+        pass
+
+    return config
 
 
 def save_config(config, dest_file_name):

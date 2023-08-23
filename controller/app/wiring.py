@@ -58,8 +58,6 @@ class MockWiring(Wiring):
         def __init__(self, value=0, irq_handler=None):
             self._value = value
             self.irq_handler = irq_handler
-            # self.irq_rising = irq_rising
-            # self.irq_falling = irq_falling
 
         def value(self, new_value=None):
             if new_value is not None:
@@ -70,25 +68,25 @@ class MockWiring(Wiring):
 
             return self._value
 
-    class MockIrqEventHandler(object):
-        def __init__(self, event):
-            self.event = event
-
-        def handle_irq(self, pin):
-            self.dispatch(pin.value)
-
-        def dispatch(self, pin_state):
-            self.event.trigger()
+    # class MockIrqEventHandler(object):
+    #     def __init__(self, event):
+    #         self.event = event
+    #
+    #     def handle_irq(self, pin):
+    #         self.dispatch(pin.value)
+    #
+    #     def dispatch(self, pin_state):
+    #         self.event.trigger()
 
     def initialize(self):
         self._led1 = MockWiring.MockPin()
-        self._btn1 = MockWiring.MockPin(1, irq_handler=self.btn1_irq_handler)
+        self._btn1 = MockWiring.MockPin(0, irq_handler=self.btn1_irq_handler)
 
     def btn1_irq_handler(self, pin):
         pin_value = pin.value()
-        if pin_value == 0:
+        if pin_value == 1:
             self.trigger_event(self.btn_down_event)
-        elif pin_value == 1:
+        elif pin_value == 0:
             self.trigger_event(self.btn_up_event)
 
     @property

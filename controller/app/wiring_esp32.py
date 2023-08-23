@@ -58,10 +58,8 @@ class WiringESP32(Wiring):
 
         self._event_trigger_fn = self.trigger_event  # store a reference to the bound function
 
-        self._btn1 = Pin(self.config.get('BTN1_PIN', 4), Pin.IN, Pin.PULL_UP)
-        self._btn1.irq(handler=self.btn1_irq_handler,
-                       trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING,
-                       wake=machine.SLEEP | machine.DEEPSLEEP)
+        self._btn1 = Pin(self.config.get('BTN1_PIN', 4), Pin.IN)
+        self._btn1.irq(handler=self.btn1_irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING)
 
     def btn1_irq_handler(self, pin):
         # handle the immediate interrupt
@@ -81,6 +79,6 @@ class WiringESP32(Wiring):
 
         pin_value = pin.value()
         if pin_value == 1:
-            micropython.schedule(self._event_trigger_fn, self.btn_up_event)
-        elif pin_value == 0:
             micropython.schedule(self._event_trigger_fn, self.btn_down_event)
+        elif pin_value == 0:
+            micropython.schedule(self._event_trigger_fn, self.btn_up_event)

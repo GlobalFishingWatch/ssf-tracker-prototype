@@ -2,14 +2,9 @@ import unittest
 
 from timer import Timer
 from timer import ManualTimer
+from statemachine import MockEvent
+from statemachine import Event
 
-
-class MockEvent(object):
-    def __init__(self):
-        self.trigger_count = 0
-
-    def trigger(self):
-        self.trigger_count += 1
 
 
 class TestTimer(unittest.TestCase):
@@ -29,21 +24,24 @@ class TestTimer(unittest.TestCase):
         self.assertEqual(t._deadline, 100)
 
     def test_trigger_event(self):
-        event = MockEvent()
+        event = MockEvent('timeout')
         t = ManualTimer(event=event)
         t.trigger_event()
+        Event.trigger_scheduled_events()
         self.assertEqual(event.trigger_count, 1)
 
     def test_check(self):
-        event = MockEvent()
+        event = MockEvent('timeout')
         t = ManualTimer(event=event)
         t.reset(duration_ms=100)
         self.assertFalse(t.is_expired())
         t.check()
+        Event.trigger_scheduled_events()
         self.assertEqual(event.trigger_count, 0)
         t.time_ms = 100
         self.assertTrue(t.is_expired())
         t.check()
+        Event.trigger_scheduled_events()
         self.assertEqual(event.trigger_count, 1)
 
     def test_active_timers(self):

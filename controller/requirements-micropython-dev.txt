@@ -3,3 +3,4 @@ unittest-discover
 tempfile
 shutil
 ujson
+collecttions-deque
