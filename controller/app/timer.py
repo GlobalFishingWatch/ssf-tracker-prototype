@@ -16,7 +16,7 @@ class Timer(object):
         return time.time_ns() // 1000000
 
     def is_expired(self):
-        return self.current_time_ms() >= self._deadline if self.active else False
+        return Timer.current_time_ms() >= self._deadline if self.active else False
 
     def check(self):
         if self.is_expired():
@@ -39,7 +39,7 @@ class Timer(object):
             self.recurring = recurring
         if event is not None:
             self.event = event
-        self._deadline = self.current_time_ms() + self.duration_ms
+        self._deadline = Timer.current_time_ms() + self.duration_ms
         self.active = True
         self.active_timers.add(self)
 
@@ -52,11 +52,36 @@ class Timer(object):
             self.event.trigger()
 
 
-# A subclass of timer that lets us manually set the current time, used for testing
-class ManualTimer(Timer):
-    def __init__(self, **kwargs):
-        self.time_ms = 0
-        super(ManualTimer, self).__init__(**kwargs)
+class MockTime(object):
+    # can't use unittest.mock in micropython, so we are manually mocking Timer.current_time_ms() to return the
+    # value defined in this class so a test can control what time the Timer class sees
+
+    def __new__(cls):
+        # Make this a singleton class
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(MockTime, cls).__new__(cls)
+        return cls.instance
+
+    time_ms = 0
+
+    def __init__(self):
+        self.old_time_fn = None
 
     def current_time_ms(self):
         return self.time_ms
+
+    def set_current_time_ms(self, value):
+        self.time_ms = value
+        return value
+
+    def increment_time_ms(self, increment):
+        self.time_ms += increment
+        return self.time_ms
+
+    def setup(self):
+        self.time_ms = 0
+        self.old_time_fn = Timer.current_time_ms
+        Timer.current_time_ms = self.current_time_ms
+
+    def tearDown(self):
+        Timer.current_time_ms = self.old_time_fn

@@ -2,6 +2,7 @@
 from config import default_logger
 from collections import deque
 
+
 class State(object):
     def __init__(self, name, on_enter=None, on_exit=None):
         self.name = name
@@ -38,7 +39,6 @@ class Event(object):
             event._trigger()
 
 
-
 class MockEvent(Event):
     # Event class for testing.  Does not do anything other than count the
     # number of times that the event has benn triggered
@@ -50,7 +50,7 @@ class MockEvent(Event):
         pass
 
     def trigger(self):
-            self.trigger_count += 1
+        self.trigger_count += 1
 
 
 class Transition(object):
@@ -81,8 +81,27 @@ class Transition(object):
 
 
 class StateMachine(object):
+    machines = {}
+
+    @classmethod
+    def generate_unique_name(cls, basename):
+        for n in range(1, 10):
+            name = f'{basename}{n}'
+            if name not in cls.machines:
+                break
+
+        return name
+
+    @classmethod
+    def get_machine(cls, machine_name):
+        return cls.machines[machine_name]
+
     def __init__(self, states=None, transitions=None, initial_state=None, name=None, log=None):
-        self.name = name if name else self.__class__.__name__
+        self.name = name if name else self.generate_unique_name(self.__class__.__name__)
+        if self.name in self.machines:
+            raise ValueError(f'Statemachine name "{self.name}" is not unique')
+        self.machines[self.name] = self
+
         self.log = log if log else default_logger()
         self.states = {}
         self._state = None

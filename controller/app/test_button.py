@@ -1,13 +1,21 @@
 import unittest
 
 from button import Button
-from timer import ManualTimer
+# from timer import Timer
+from timer import MockTime
 from statemachine import MockEvent
 from statemachine import Event
 
 
-
 class TestButton(unittest.TestCase):
+
+    def setUp(self):
+        self.mock_time = MockTime()
+        self.mock_time.setup()
+
+    def tearDown(self):
+        self.mock_time.tearDown()
+
     def test_button_transitions(self):
         button = Button(on_press_event=MockEvent('press'),
                         on_release_event=MockEvent('release'))
@@ -31,9 +39,8 @@ class TestButton(unittest.TestCase):
         button = Button(on_press_event=MockEvent('press'),
                         on_release_event=MockEvent('release'))
 
-        button.bounce_timer=ManualTimer(event=button.get_event('timeout'))
         button.trigger_event('btn_down')
-        button.bounce_timer.time_ms += button.bounce_timeout_ms
+        self.mock_time.increment_time_ms(button.bounce_timeout_ms)
         button.bounce_timer.check()
         Event.trigger_scheduled_events()
         self.assertEqual(button.state.name, 'pressed')

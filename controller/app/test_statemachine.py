@@ -4,12 +4,26 @@ from statemachine import Event
 from statemachine import State
 from statemachine import Transition
 from statemachine import StateMachine
+from event_runner import run_events
 
 
 class TestMachine (StateMachine):
+    state_A = State('A')
+    state_B = State('B')
+    state_C = State('C')
+
+    states = [state_A, state_B, state_C]
+
+    transitions = [
+        Transition(source='A', dest='B', event='A2B'),
+        Transition(source='B', dest='C', event='B2C'),
+        Transition(source='C', dest='A', event='C2A'),
+        Transition(event='test', after='test_func')
+    ]
+
     def __init__(self, **kwargs):
         self.test = False
-        super(TestMachine, self).__init__(**kwargs)
+        super(TestMachine, self).__init__(states=self.states, transitions=self.transitions, **kwargs)
 
     def test_func(self, event):
         self.test = True
@@ -24,24 +38,14 @@ class TestMachine (StateMachine):
         return False
 
 
-state_A = State('A')
-state_B = State('B')
-state_C = State('C')
-
-states = [state_A, state_B, state_C]
-
-transitions = [
-    Transition(source='A', dest='B', event='A2B'),
-    Transition(source='B', dest='C', event='B2C'),
-    Transition(source='C', dest='A', event='C2A'),
-    Transition(event='test', after='test_func')
-]
-
-
 class TestStateMachine(unittest.TestCase):
+
     def setUp(self):
-        self.machine = TestMachine(states=states, transitions=transitions)
+        self.machine = TestMachine(name='TestMachine')
         self.test_event = self.make_event('test')
+
+    def tearDown(self):
+        StateMachine.machines.pop('TestMachine')
 
     def make_event(self, name='test'):
         return Event(name=name, machine=self.machine)
@@ -65,25 +69,30 @@ class TestStateMachine(unittest.TestCase):
         self.assertEqual(self.machine.get_state('A').name, 'A')
 
     def test_set_state(self):
-        self.assertEqual(self.machine.state, state_A)
+        self.assertEqual(self.machine.state, TestMachine.state_A)
         self.machine.set_state('B')
-        self.assertEqual(self.machine.state, state_B)
+        self.assertEqual(self.machine.state, TestMachine.state_B)
 
     def test_get_matched_transitions(self):
-        self.assertIs(self.machine.state, state_A)
+        self.assertIs(self.machine.state, TestMachine.state_A)
         t = self.machine.get_matched_transitions(event='A2B', state=self.machine.state)
         self.assertEqual(len(t), 1)
         self.assertEqual(t[0].dest, 'B')
 
     def test_trigger_event(self):
-        self.assertIs(self.machine.state, state_A)
+        self.assertIs(self.machine.state, TestMachine.state_A)
         self.machine.trigger_event('A2B')
-        self.assertEqual(self.machine.state, state_B)
+        self.assertEqual(self.machine.state, TestMachine.state_B)
 
     def test_event_trigger(self):
         event = self.make_event('A2B')
         event._trigger()
-        self.assertEqual(event.machine.state, state_B)
+        self.assertEqual(event.machine.state, TestMachine.state_B)
+
+    def test_generate_unique_name(self):
+        self.assertEqual(self.machine.generate_unique_name('Unique'), 'Unique1')
+        StateMachine.machines['Unique1'] = None
+        self.assertEqual(self.machine.generate_unique_name('Unique'), 'Unique2')
 
     def test_name(self):
         self.assertEqual(self.machine.name, 'TestMachine')
@@ -103,6 +112,14 @@ class TestStateMachine(unittest.TestCase):
     def test_invalid_event(self):
         with self.assertRaises(ValueError):
             self.machine.trigger_event('invalid')
+
+    def test_run_events(self):
+        events = [
+            ('TestMachine', 'A2B', 10),
+            ('TestMachine', 'B2C', 20),
+        ]
+        run_events(events)
+        self.assertEqual(self.machine.state.name, 'C')
 
 
 if __name__ == '__main__':

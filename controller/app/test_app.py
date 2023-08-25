@@ -1,13 +1,17 @@
 import unittest
 from app import App
 from wiring import MockWiring
-from statemachine import Event
+from statemachine import StateMachine
+
 
 class TestApp(unittest.TestCase):
     def setUp(self):
         config = {}
         self.app = App(WiringType=MockWiring, config=config)
         self.app.initialize()
+
+    def tearDown(self):
+        StateMachine.machines = {}
 
     def test_app_creation(self):
         self.assertEqual(self.app.state.name, 'boot')
