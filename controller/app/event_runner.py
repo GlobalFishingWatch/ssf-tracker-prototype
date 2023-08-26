@@ -1,6 +1,7 @@
 from statemachine import StateMachine
 from statemachine import Event
 from timer import MockTime
+from timer import Timer
 
 
 def run_events(events):
@@ -11,6 +12,7 @@ def run_events(events):
         machine = StateMachine.get_machine(machine_name)
         event = machine.get_event(event_name)
         mock_time.set_current_time_ms(int(time_ms))
+        # Timer.check_active_timers()
         event.trigger()
         Event.trigger_scheduled_events()
 

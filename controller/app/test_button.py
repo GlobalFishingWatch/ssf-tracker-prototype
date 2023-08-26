@@ -1,7 +1,6 @@
 import unittest
 
 from button import Button
-# from timer import Timer
 from timer import MockTime
 from statemachine import MockEvent
 from statemachine import Event
