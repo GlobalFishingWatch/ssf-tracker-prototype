@@ -16,8 +16,8 @@ class Wiring(object):
     specific subclass
     """
     def __init__(self, config,
-                 btn1_up_event,
-                 btn1_down_event):
+                 btn1_up_event = None,
+                 btn1_down_event = None):
         self.config = config
         self.btn_up_event = btn1_up_event
         self.btn_down_event = btn1_down_event
@@ -49,6 +49,8 @@ class Wiring(object):
         else:
             time.sleep(time_ms / 1000)
 
+    def deepsleep(self, time_ms):
+        self.lightsleep(time_ms)
 
 class MockWiring(Wiring):
     """
@@ -68,19 +70,12 @@ class MockWiring(Wiring):
 
             return self._value
 
-    # class MockIrqEventHandler(object):
-    #     def __init__(self, event):
-    #         self.event = event
-    #
-    #     def handle_irq(self, pin):
-    #         self.dispatch(pin.value)
-    #
-    #     def dispatch(self, pin_state):
-    #         self.event.trigger()
 
     def initialize(self):
         self._led1 = MockWiring.MockPin()
         self._btn1 = MockWiring.MockPin(0, irq_handler=self.btn1_irq_handler)
+        self.cumulative_lightsleep_time_ms = 0
+        self.cumulative_deepsleep_time_ms = 0
 
     def btn1_irq_handler(self, pin):
         pin_value = pin.value()
@@ -96,3 +91,9 @@ class MockWiring(Wiring):
     @btn1.setter
     def btn1(self, value):
         self._btn1.value(value)
+
+    def lightsleep(self, time_ms):
+        self.cumulative_lightsleep_time_ms += time_ms
+
+    def deepsleep(self, time_ms):
+        self.cumulative_deepsleep_time_ms += time_ms

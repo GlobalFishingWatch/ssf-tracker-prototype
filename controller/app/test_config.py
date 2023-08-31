@@ -36,12 +36,18 @@ class TestConfig(unittest.TestCase):
         return f'{self.temp_dir()}/logfile.txt'
 
     def test_load_config(self):
-        config = load_config(self.config_file_name())
-        self.assertEqual(config, self.test_cfg)
+        expected = self.test_cfg.copy()
+        self.assertEqual(load_config(json.dumps(self.test_cfg)), expected)
+        self.assertEqual(load_config(self.test_cfg), expected)
+        self.assertEqual(load_config(self.config_file_name()), expected)
+        expected['SETTINGS_FILE'] = self.config_file_name()
 
-    def test_load_config_not_fount(self):
-        config = load_config('not-found.json')
-        self.assertEqual(config, default_config)
+    def test_load_config_not_found(self):
+        filename = 'not-found.json'
+        expected = default_config.copy()
+        expected['SETTINGS_FILE'] = filename
+        expected['SETTINGS_LOAD_STATUS'] = f'File not found "{filename}"'
+        self.assertEqual(load_config(filename), expected)
 
     def test_save_config(self):
         save_config(self.test_cfg, self.config_file_name())
@@ -55,7 +61,7 @@ class TestConfig(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(unittest.TestCase, 'assertRegex'), "Can't use assertRegex in micropython")
     def test_file_logger(self):
-        config = {'log-file': self.log_file_name()}
+        config = {'LOG_FILE': self.log_file_name()}
         logger = configure_logger(config)
 
         # remove all the handlers except the file handler

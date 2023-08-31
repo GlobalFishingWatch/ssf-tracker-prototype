@@ -22,7 +22,7 @@ import unittest
 # All these imported tests will be run when unittest.main() is invoked below
 # Note that TestWiringEsp32 is not included here because it can only be tested
 # when running on the device
-from test_app import TestApp
+from test_app import TestApp, TestAppTransitions
 from test_button import TestButton
 from test_config import TestConfig
 from test_statemachine import TestStateMachine
@@ -34,6 +34,7 @@ from test_gps import TestMockGPS
 def run_all_tests_esp32():
     suite = unittest.TestSuite()
     suite.addTest(TestApp())
+    suite.addTest(TestAppTransitions())
     suite.addTest(TestButton())
     suite.addTest(TestConfig())
     suite.addTest(TestStateMachine())

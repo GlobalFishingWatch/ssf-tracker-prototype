@@ -11,6 +11,22 @@ class Timer(object):
         self.event = event
         self.active = False
 
+    @classmethod
+    def check_active_timers(cls):
+        timers = [t for t in cls.active_timers]
+        for t in timers:
+            t.check()
+
+    @classmethod
+    def get_next_timer(cls):
+        return min(cls.active_timers, key=lambda x: x._deadline) if cls.active_timers else None
+
+    @classmethod
+    def cancel_all(cls):
+        timers = [t for t in cls.active_timers]
+        for t in timers:
+            t.cancel()
+
     @staticmethod
     def current_time_ms():
         return time.time_ns() // 1000000
@@ -26,11 +42,8 @@ class Timer(object):
             else:
                 self.cancel()
 
-    @classmethod
-    def check_active_timers(cls):
-        timers = [t for t in cls.active_timers]
-        for t in timers:
-            t.check()
+    def time_remaining_ms(self):
+        return self._deadline - self.current_time_ms() if self.active else 0
 
     def reset(self, duration_ms=None, recurring=None, event=None):
         if duration_ms is not None:
@@ -51,6 +64,17 @@ class Timer(object):
         if self.event:
             self.event.trigger()
 
+    def save_state(self):
+        return dict(
+            active=self.active,
+            deadline=self._deadline
+        )
+
+    def load_state(self, state):
+        self.active = state['active']
+        self._deadline = state['deadline']
+        if self.active:
+            self.active_timers.add(self)
 
 class MockTime(object):
     # can't use unittest.mock in micropython, so we are manually mocking Timer.current_time_ms() to return the

@@ -44,3 +44,12 @@ class Button(StateMachine):
         self.bounce_timer.cancel()
         if self.on_release_event:
             self.on_release_event.trigger()
+
+    def save_state(self):
+        state = super(Button, self).save_state()
+        state['timer'] = self.bounce_timer.save_state()
+        return state
+
+    def load_state(self, state):
+        self.bounce_timer.load_state(state['timer'])
+        super(Button, self).load_state(state)

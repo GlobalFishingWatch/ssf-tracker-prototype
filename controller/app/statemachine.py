@@ -1,6 +1,7 @@
 # A basic state machine
 from config import default_logger
 from collections import deque
+import ujson as json
 
 
 class State(object):
@@ -177,3 +178,11 @@ class StateMachine(object):
     def callback(cls, func, event):
         func = getattr(event.machine, func) if func else None
         return func(event) if func else None
+
+    def save_state(self):
+        return dict(
+            state=self._state.name
+        )
+
+    def load_state(self, state):
+        self._state = self.get_state(state['state'])

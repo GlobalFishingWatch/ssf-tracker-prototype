@@ -4,16 +4,9 @@ from timer import Timer
 from timer import MockTime
 from statemachine import MockEvent
 from statemachine import Event
-
+import ujson as json
 
 class TestTimer(unittest.TestCase):
-    # can't use unittest.mock in micropython, so we are manually mocking Timer.current_time_ms() to return the
-    # value defined in this class so the test can control what time the Timer class sees
-    # time_ms = 0
-    #
-    # @staticmethod
-    # def current_time_ms():
-    #     return TestTimer.time_ms
 
     def setUp(self):
         self.mock_time = MockTime()
@@ -21,14 +14,6 @@ class TestTimer(unittest.TestCase):
 
     def tearDown(self):
         self.mock_time.tearDown()
-
-    # def setUp(self):
-    #     TestTimer.time_ms = 0
-    #     self.old_current_time_ms = Timer.current_time_ms
-    #     Timer.current_time_ms = TestTimer.current_time_ms
-    #
-    # def tearDown(self):
-    #     Timer.current_time_ms = self.old_current_time_ms
 
     def test_is_expired(self):
         t = Timer()
@@ -38,6 +23,24 @@ class TestTimer(unittest.TestCase):
         self.assertFalse(t.is_expired())
         t.active = True
         self.assertTrue(t.is_expired())
+
+    def test_time_remaining(self):
+        t = Timer()
+        self.assertEqual(t.time_remaining_ms(), 0)
+        t._deadline = 100
+        self.assertEqual(t.time_remaining_ms(), 0)
+        t.active = True
+        self.assertEqual(t.time_remaining_ms(), 100)
+
+    def test_get_next_timer(self):
+        Timer.active_timers = set()
+        self.assertIsNone(Timer.get_next_timer())
+        t1 = Timer()
+        t1.reset(duration_ms=100)
+        self.assertIs(Timer.get_next_timer(), t1)
+        t2 = Timer()
+        t2.reset(duration_ms=50)
+        self.assertIs(Timer.get_next_timer(), t2)
 
     def test_reset(self):
         t = Timer()
@@ -78,6 +81,30 @@ class TestTimer(unittest.TestCase):
         t = Timer()
         t.cancel()
 
+    def test_cancel_all(self):
+        t = Timer()
+        t.reset(duration_ms=100)
+        self.assertIn(t, Timer.active_timers)
+        Timer.cancel_all()
+        self.assertEqual(len(Timer.active_timers), 0)
+
+    def test_save_state(self):
+        t = Timer()
+        self.assertEqual(t.save_state(), {'active': False, 'deadline': 0})
+
+    def test_load_state(self):
+        t = Timer()
+        state = {'active': True, 'deadline': 100}
+        t.load_state(state)
+        self.assertEqual(t._deadline, state['deadline'])
+        self.assertTrue(t.active)
+        self.assertIn(t, Timer.active_timers)
+
+    def test_state_to_json(self):
+        t = Timer()
+        t._deadline = 123
+        t.load_state(json.loads(json.dumps(t.save_state())))
+        self.assertEqual(t._deadline, 123)
 
 if __name__ == '__main__':
     unittest.main()
