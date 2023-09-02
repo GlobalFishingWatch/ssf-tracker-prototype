@@ -13,14 +13,15 @@ default_config = {
     'LOG_FILE': 'log.txt',
     'LED1_PIN': 5,
     'BTN1_PIN': 4,
-    'IDLE_TIMEOUT_MS': 10000,
-    'GPS_FIX_INTERVAL_MS': 4 * 60 * 60 * 1000,
+    'IDLE_TIMEOUT_MS': 10 * 1000,
+    'GPS_FIX_INTERVAL_MS': 5 * 60 * 1000,
+    'APP_BUSY_WAIT_INTERVAL_MS': 10 * 1000,
     'MIN_LIGHTSLEEP_TIME_MS': 100,
     'MAX_LIGHTSLEEP_TIME_MS': 1000,
     'MIN_DEEPSLEEP_TIME_MS': 100,
     'MAX_DEEPSLEEP_TIME_MS': 1000,
     'SETTINGS_FILE': None,
-    'SETTINGS_LOAD_STATUS': 'ok'
+    'SETTINGS_LOAD_STATUS': 'ok',
 }
 
 def load_config(settings):

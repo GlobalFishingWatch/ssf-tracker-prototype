@@ -36,7 +36,7 @@ class MockGPS(StateMachine):
         return self._last_location
 
     def on_enter_locating(self, event):
-        # start a timer that will transition us to reacy
+        # start a timer that will transition us to ready
         self.gps_timer.reset()
 
     def on_enter_ready(self, event):

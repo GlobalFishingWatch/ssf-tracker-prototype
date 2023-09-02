@@ -77,9 +77,19 @@ class TestTimer(unittest.TestCase):
         self.assertTrue(t not in Timer.active_timers)
         self.assertEqual(len(Timer.active_timers), 0)
 
+    def test_cancel(self):
+        t = Timer()
+        t.reset(duration_ms=100)
+        self.assertTrue(t.active)
+        self.assertNotEqual(t._deadline,  0)
+        t.cancel()
+        self.assertFalse(t.active)
+        self.assertEqual(t._deadline,  0)
+
     def test_cancel_inactive(self):
         t = Timer()
         t.cancel()
+        self.assertFalse(t.active)
 
     def test_cancel_all(self):
         t = Timer()

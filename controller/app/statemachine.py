@@ -30,6 +30,10 @@ class Event(object):
         self.machine.trigger_event(self)
 
     def trigger(self):
+        # does the same thing as schedule
+        self.schedule()
+
+    def schedule(self):
         # put the event in the event queue to be executed on the next call to trigger_scheduled_events()
         self.event_queue.appendleft(self)
 
@@ -50,7 +54,7 @@ class MockEvent(Event):
     def _trigger(self):
         pass
 
-    def trigger(self):
+    def schedule(self):
         self.trigger_count += 1
 
 
@@ -173,6 +177,10 @@ class StateMachine(object):
         transitions = self.get_matched_transitions(event=event, state=self.state)
         for t in transitions:
             t.execute(event)
+
+    def schedule_event(self, event, **kwargs):
+        event = self.get_event(event, **kwargs)
+        event.schedule()
 
     @classmethod
     def callback(cls, func, event):

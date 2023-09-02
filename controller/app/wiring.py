@@ -23,6 +23,7 @@ class Wiring(object):
         self.btn_down_event = btn1_down_event
         self._led1 = None
         self._btn1 = None
+        self._wake_reason = 'RESET'
 
     def initialize(self):
         raise NotImplementedError('You must create a subclass of Wiring that implements initialize()')
@@ -51,6 +52,13 @@ class Wiring(object):
 
     def deepsleep(self, time_ms):
         self.lightsleep(time_ms)
+
+    def reset(self):
+        self._wake_reason = 'RESET'
+
+    def wake_reason(self):
+        return self._wake_reason
+
 
 class MockWiring(Wiring):
     """
@@ -97,3 +105,4 @@ class MockWiring(Wiring):
 
     def deepsleep(self, time_ms):
         self.cumulative_deepsleep_time_ms += time_ms
+        self._wake_reason = 'TIMER'

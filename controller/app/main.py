@@ -2,6 +2,8 @@
 # this is the main app for the microcontroller
 # runs after boot.py
 
+
+
 from config import load_config
 from config import configure_logger
 from app import App
@@ -68,7 +70,7 @@ def irq_handler(pin):
 
 led = Pin (5, Pin.OUT)
 wake1 = Pin(4, mode = Pin.IN)
-wake1.irq(handler=irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, wake=machine.SLEEP)
+# wake1.irq(handler=irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, wake=machine.SLEEP)
 esp32.wake_on_ext0(pin = wake1, level = esp32.WAKEUP_ANY_HIGH)
 
 def run_test_deep_sleep():
@@ -131,7 +133,12 @@ def run_test_sleep():
         #sleep for 10 seconds (10000 milliseconds)
         sleep(10)
 
+def blink():
+    while True:
+        led.value(not led.value())
+        sleep(0.5)
 
 # run_test_deep_sleep()
 # run_test_light_sleep()
-run_test_sleep()
+# run_test_sleep()
+blink()

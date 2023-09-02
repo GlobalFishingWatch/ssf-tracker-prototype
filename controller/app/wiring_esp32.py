@@ -82,3 +82,43 @@ class WiringESP32(Wiring):
             micropython.schedule(self._event_trigger_fn, self.btn_down_event)
         elif pin_value == 0:
             micropython.schedule(self._event_trigger_fn, self.btn_up_event)
+
+    def wake_reason(self):
+        # reset_cause = machine.reset_cause()
+        wake_reason = machine.wake_reason()
+
+        if wake_reason is machine.PIN_WAKE:
+            wake_reason = 'PIN'
+        elif wake_reason is machine.TIMER_WAKE:
+            wake_reason = 'TIMER'
+        else:
+            wake_reason = 'RESET'
+
+        return wake_reason
+
+
+        # if reset_cause is machine.HARD_RESET:
+        #     reset_cause = 'HARD_RESET'
+        # elif reset_cause is machine.PWRON_RESET:
+        #     reset_cause = 'PWRON_RESET'
+        # elif reset_cause is machine.WDT_RESET:
+        #     reset_cause = 'WDT_RESET'
+        # elif reset_cause is machine.DEEPSLEEP_RESET:
+        #     reset_cause = 'DEEPSLEEP_RESET'
+        # elif reset_cause is machine.SOFT_RESET:
+        #     reset_cause = 'SOFT_RESET'
+
+        # wake_reason = machine.wake_reason()
+        # if wake_reason is machine.PIN_WAKE:
+        #     wake_reason = 'PIN_WAKE'
+        # elif wake_reason is machine.EXT0_WAKE:
+        #     wake_reason = 'EXT0_WAKE'
+        # elif wake_reason is machine.EXT1_WAKE:
+        #     wake_reason = 'EXT1_WAKE'
+        # elif wake_reason is machine.TIMER_WAKE:
+        #     wake_reason = 'TIMER_WAKE'
+        # elif wake_reason is machine.TOUCHPAD_WAKE:
+        #     wake_reason = 'TOUCHPAD_WAKE'
+        # elif wake_reason is machine.ULP_WAKE:
+        #     wake_reason = 'ULP_WAKE'
+

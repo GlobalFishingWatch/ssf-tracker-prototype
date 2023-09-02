@@ -17,7 +17,6 @@ class TestApp(unittest.TestCase):
             'LOG_LEVEL': 'INFO'
         }
         self.app = App.from_settings(self.config, wiring_type=MockWiring)
-        # self.app = App(name='TestApp', WiringType=MockWiring, config=self.config)
         self.app.initialize()
 
     def tearDown(self):
@@ -83,6 +82,11 @@ class TestApp(unittest.TestCase):
         max_time = self.app.config['MAX_DEEPSLEEP_TIME_MS']
         self.assertEqual(self.app.wiring.cumulative_deepsleep_time_ms, max_time)
 
+    def test_wake_from_sleep(self):
+        self.app.wiring.deepsleep(1)
+        self.app.initialize()
+
+
     def test_app_btn_down(self):
         self.assertEqual(self.app.wiring.led1, 0)
         self.app.wiring.btn1 = 1    # button down
@@ -100,11 +104,9 @@ class TestApp(unittest.TestCase):
 class TestAppTransitions(EventTestRunner):
     def setUp(self):
         self.config = {
-            'IDLE_TIMEOUT_MS': 10000,
             'LOG_LEVEL': 'INFO'
         }
         self.app = App.from_settings(name='TestApp', settings=self.config, wiring_type=MockWiring)
-        # self.app = App(name='TestApp', WiringType=MockWiring, config=self.config)
         self.app.initialize()
 
     def tearDown(self):
@@ -113,9 +115,13 @@ class TestAppTransitions(EventTestRunner):
     def test_transitions(self):
         self.assertEqual(self.app.state.name, 'boot')
         events = [
-            ('TestApp', 'reset', 100, 'idle'),
-            ('TestApp', None, self.config['IDLE_TIMEOUT_MS'], 'sleep'),  # advance the timer to trigger event 'idle_timeout'
-            ('TestApp', 'timer_wake', 2000, 'idle'),
+            ('TestApp', None, 0, 'idle'),     # transition from boot to idle happens immediately
+            ('TestApp', 'idle_timeout', 0, 'sleep'),  # advance the timer to trigger event 'idle_timeout'
+            ('TestApp', 'timer_wake', 0, 'idle'),
+            ('MockGPS1', None, 0, 'sleep'),  # gps should be sleeping
+            ('TestApp', 'gps_timer', 0, 'locating'),
+            ('MockGPS1', None, 0, 'locating'),  # gps should now be active
+            ('MockGPS1', 'gps_ready', 0, 'sleep'),  # gps should now be active
         ]
         self.run_events(events)
 

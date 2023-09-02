@@ -111,6 +111,13 @@ class TestStateMachine(unittest.TestCase):
         event._trigger()
         self.assertEqual(event.machine.state, TestMachine.state_B)
 
+    def test_event_schedule(self):
+        event = self.make_event('A2B')
+        event.schedule()
+        self.assertEqual(event.machine.state, TestMachine.state_A)
+        Event.trigger_scheduled_events()
+        self.assertEqual(event.machine.state, TestMachine.state_B)
+
     def test_generate_unique_name(self):
         self.assertEqual(self.machine.generate_unique_name('Unique'), 'Unique1')
         StateMachine.machines['Unique1'] = None
