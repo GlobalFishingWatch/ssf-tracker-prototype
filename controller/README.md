@@ -58,6 +58,7 @@ micropython -m mip install logging
 micropython -m mip install shutil
 micropython -m mip install ujson
 micropython -m mip install collecttions-deque
+micropython -m mip install copy
 ```
 
 Now you should be able to run the unit tests with micropython
@@ -77,6 +78,7 @@ mpremote mip install logging
 mpremote mip install shutil
 mpremote mip install ujson
 mpremote mip install collecttions-deque
+mpremote mip install copy
 ```
 
 ### Copy files to the esp32 device

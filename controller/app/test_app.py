@@ -1,5 +1,7 @@
 import unittest
+from copy import deepcopy
 from app import App
+from config import default_app_state
 from wiring import MockWiring
 from statemachine import StateMachine
 from statemachine import MockEvent
@@ -42,39 +44,34 @@ class TestApp(unittest.TestCase):
         self.assertEqual(self.app.wiring.cumulative_lightsleep_time_ms, before)
 
     def test_save_state(self):
-        expected = {
-            'state': 'boot',
-            'idle_timer': {'active': False, 'deadline': 0},
-            'button1': {'state': 'released', 'timer': {'active': False, 'deadline': 0},}
-        }
-        self.assertEqual(self.app.save_state(), expected)
+        self.assertEqual(self.app.save_state(), default_app_state)
 
     def test_load_state(self):
-        state = {
-            'state': 'sleep',
-            'idle_timer': {'active': True, 'deadline': 1000},
-            'button1': {'state': 'released', 'timer': {'active': False, 'deadline': 0},}
-        }
+        state = deepcopy(default_app_state)
+        state['state'] = 'locating'
+        state['button1']['state'] = 'pressed'
+        state['gps_timer']['active'] = True
+
         self.app.load_state(state)
-        self.assertEqual(self.app.state.name, 'sleep')
-        self.assertEqual(self.app.idle_timer.active, True)
-        self.assertEqual(self.app.button1.state.name, 'released')
+        self.assertEqual(self.app.state.name, 'locating')
+        self.assertEqual(self.app.gps_timer.active, True)
+        self.assertEqual(self.app.button1.state.name, 'pressed')
 
     # TODO test self.app.run()
 
-    def test_get_sleep_time(self):
+    def test_max_sleep_time_ms(self):
         Timer.cancel_all()
-        min_time = self.app.config['MIN_DEEPSLEEP_TIME_MS']
-        max_time = self.app.config['MAX_DEEPSLEEP_TIME_MS']
-        sleep_time = self.app.get_sleep_time_ms(min_time, max_time)
-        self.assertEqual(sleep_time, max_time)
-        timer = Timer()
-        timer.reset(duration_ms=min_time)
-        sleep_time = self.app.get_sleep_time_ms(min_time, max_time)
-        self.assertEqual(sleep_time, 0)
-        timer.reset(duration_ms=min_time+10)
-        sleep_time = self.app.get_sleep_time_ms(min_time, max_time)
-        self.assertEqual(sleep_time, min_time+10)
+        self.assertEqual(self.app.max_sleep_time_ms(1000), 1000)
+        t = Timer(duration_ms=99)
+        t.reset()
+        self.assertEqual(self.app.max_sleep_time_ms(1000), 99)
+
+    def test_can_deep_sleep(self):
+        Timer.cancel_all()
+        self.assertTrue(self.app.can_deep_sleep(event=None))
+        t = Timer(duration_ms=self.config['MIN_DEEPSLEEP_TIME_MS'] / 2)
+        t.reset()
+        self.assertFalse(self.app.can_deep_sleep(event=None))
 
     def test_on_sleep(self):
         Timer.cancel_all()

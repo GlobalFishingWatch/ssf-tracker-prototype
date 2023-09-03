@@ -7,6 +7,14 @@ except ImportError or ModuleNotFoundError:
 
 from timer import Timer
 
+default_app_state = {
+    'state': 'boot',
+    'idle_timer': {'active': False, 'deadline': 0},
+    'gps_timer': {'active': False, 'deadline': 0},
+    'button1': {'state': 'released', 'timer': {'active': False, 'deadline': 0},},
+    'locations': []
+}
+
 # DEFAULT CONFIG SETTINGS
 default_config = {
     'LOG_LEVEL': 'DEBUG',
@@ -15,13 +23,14 @@ default_config = {
     'BTN1_PIN': 4,
     'IDLE_TIMEOUT_MS': 10 * 1000,
     'GPS_FIX_INTERVAL_MS': 5 * 60 * 1000,
-    'APP_BUSY_WAIT_INTERVAL_MS': 10 * 1000,
+    'RETRY_INTERVAL_MS': 10 * 1000,
     'MIN_LIGHTSLEEP_TIME_MS': 100,
     'MAX_LIGHTSLEEP_TIME_MS': 1000,
-    'MIN_DEEPSLEEP_TIME_MS': 100,
-    'MAX_DEEPSLEEP_TIME_MS': 1000,
+    'MIN_DEEPSLEEP_TIME_MS': 10 * 1000,
+    'MAX_DEEPSLEEP_TIME_MS': 24 * 60 * 60 * 1000,
     'SETTINGS_FILE': None,
     'SETTINGS_LOAD_STATUS': 'ok',
+    'app_state': default_app_state,
 }
 
 def load_config(settings):

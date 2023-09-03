@@ -4,3 +4,4 @@ tempfile
 shutil
 ujson
 collecttions-deque
+copy
