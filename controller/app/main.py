@@ -4,18 +4,24 @@
 
 
 
-from config import load_config
-from config import configure_logger
+# from config import load_config
+# from config import configure_logger
 from app import App
 from wiring_esp32 import WiringESP32
 
-# LOAD CONFIG
-config_filename = './config.json'
-app_config = load_config(config_filename)
+app_config = {
 
-# SET UP LOGGING
-log = configure_logger(app_config)
-log.info('Starting App...')
+}
+app = App.from_settings('./config.json', wiring_type=WiringESP32)
+app.initialize()
+
+# # LOAD CONFIG
+# config_filename = './config.json'
+# app_config = load_config(config_filename)
+#
+# # SET UP LOGGING
+# log = configure_logger(app_config)
+# log.info('Starting App...')
 
 # app = App(WiringESP32, log=log, config=app_config)
 # app.initialize()

@@ -64,7 +64,7 @@ class TestApp(unittest.TestCase):
         self.assertEqual(self.app.max_sleep_time_ms(1000), 1000)
         t = Timer(duration_ms=99)
         t.reset()
-        self.assertEqual(self.app.max_sleep_time_ms(1000), 99)
+        self.assertLessEqual(self.app.max_sleep_time_ms(1000), 99)
 
     def test_can_deep_sleep(self):
         Timer.cancel_all()

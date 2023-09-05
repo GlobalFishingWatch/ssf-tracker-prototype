@@ -35,7 +35,7 @@ class Event(object):
 
     def schedule(self):
         # put the event in the event queue to be executed on the next call to trigger_scheduled_events()
-        self.event_queue.appendleft(self)
+        self.event_queue.append(self)
 
     @classmethod
     def trigger_scheduled_events(cls):

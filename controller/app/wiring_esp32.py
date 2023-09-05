@@ -9,6 +9,7 @@ from machine import Pin
 from machine import lightsleep
 import machine
 import micropython
+import neopixel
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -48,6 +49,26 @@ class IrqPinEventHandler(object):
             self.event.trigger()
 
 
+class RGB(object):
+    COLORS = {
+        'red': (20, 0, 0),
+        'off': (0, 0, 0)
+    }
+
+    def __init__(self, pin):
+        self.rgb = neopixel.NeoPixel(Pin(pin), 1)
+        self._value = 'off'
+
+    def value(self, x=None):
+        if x is None:
+            return self._value
+        else:
+            self.rgb.fill(RGB.COLORS[x])
+            self.rgb.write()
+            self._value = x
+        return None     # explicit return for clarity
+
+
 class WiringESP32(Wiring):
     def lightsleep(self, time_ms):
         lightsleep(time_ms)
@@ -55,6 +76,9 @@ class WiringESP32(Wiring):
     def initialize(self):
         self._led1 = Pin(self.config.get('LED1_PIN', 5), Pin.OUT)
         self._led1.value(0)
+
+        self._rgb = RGB(self.config.get('RGB_PIN', 48))
+        self._rgb.value('off')
 
         self._event_trigger_fn = self.trigger_event  # store a reference to the bound function
 
@@ -70,12 +94,6 @@ class WiringESP32(Wiring):
         # allocates memory, so we can't do that here.
         #
         # see: https://docs.micropython.org/en/latest/reference/isr_rules.html
-
-        # pin_flags = pin.irq.flags()
-        # if pin_flags & Pin.IRQ_RISING:
-        #     micropython.schedule(self._event_trigger_fn, self.btn_up_event)
-        # elif pin_flags & Pin.IRQ_FALLING:
-        #     micropython.schedule(self._event_trigger_fn, self.btn_down_event)
 
         pin_value = pin.value()
         if pin_value == 1:

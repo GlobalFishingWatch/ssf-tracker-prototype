@@ -1,5 +1,6 @@
 import ujson as json
 import logging
+from copy import deepcopy
 try:
     import uerrno as errno
 except ImportError or ModuleNotFoundError:
@@ -21,6 +22,7 @@ default_config = {
     'LOG_FILE': 'log.txt',
     'LED1_PIN': 5,
     'BTN1_PIN': 4,
+    'RGB_PIN': 48,
     'IDLE_TIMEOUT_MS': 10 * 1000,
     'GPS_FIX_INTERVAL_MS': 5 * 60 * 1000,
     'RETRY_INTERVAL_MS': 10 * 1000,
@@ -44,7 +46,7 @@ def load_config(settings):
 
     :return: a dict
     """
-    config = default_config.copy()
+    config = deepcopy(default_config)
     if isinstance(settings, dict):
         config.update(settings)
     else:

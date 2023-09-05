@@ -22,6 +22,7 @@ class Wiring(object):
         self.btn_up_event = btn1_up_event
         self.btn_down_event = btn1_down_event
         self._led1 = None
+        self._rgb = None
         self._btn1 = None
         self._wake_reason = 'RESET'
 
@@ -35,6 +36,14 @@ class Wiring(object):
     @led1.setter
     def led1(self, value):
         self._led1.value(value)
+
+    @property
+    def rgb(self):
+        return self._rgb.value()
+
+    @rgb.setter
+    def rgb(self, value):
+        self._rgb.value(value)
 
     @property
     def btn1(self):
@@ -81,6 +90,7 @@ class MockWiring(Wiring):
 
     def initialize(self):
         self._led1 = MockWiring.MockPin()
+        self._rgb_led = MockWiring.MockPin(value='off')
         self._btn1 = MockWiring.MockPin(0, irq_handler=self.btn1_irq_handler)
         self.cumulative_lightsleep_time_ms = 0
         self.cumulative_deepsleep_time_ms = 0

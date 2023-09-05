@@ -2,6 +2,5 @@ unittest
 unittest-discover
 tempfile
 shutil
-ujson
-collecttions-deque
+collections-deque
 copy
