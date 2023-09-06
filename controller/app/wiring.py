@@ -16,8 +16,8 @@ class Wiring(object):
     specific subclass
     """
     def __init__(self, config,
-                 btn1_up_event = None,
-                 btn1_down_event = None):
+                 btn1_up_event=None,
+                 btn1_down_event=None):
         self.config = config
         self.btn_up_event = btn1_up_event
         self.btn_down_event = btn1_down_event
@@ -73,6 +73,11 @@ class MockWiring(Wiring):
     """
     Non-functional implementation of Wiring for use in unit testing
     """
+    def __init__(self, **kwargs):
+        self.cumulative_lightsleep_time_ms = 0
+        self.cumulative_deepsleep_time_ms = 0
+        super(MockWiring, self).__init__(**kwargs)
+
     class MockPin(object):
         def __init__(self, value=0, irq_handler=None):
             self._value = value
@@ -87,10 +92,9 @@ class MockWiring(Wiring):
 
             return self._value
 
-
     def initialize(self):
         self._led1 = MockWiring.MockPin()
-        self._rgb_led = MockWiring.MockPin(value='off')
+        self._rgb = MockWiring.MockPin(value='off')
         self._btn1 = MockWiring.MockPin(0, irq_handler=self.btn1_irq_handler)
         self.cumulative_lightsleep_time_ms = 0
         self.cumulative_deepsleep_time_ms = 0

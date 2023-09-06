@@ -1,7 +1,7 @@
 # Wiring for the ESP32-S3 development device
 #
 # Note that this inherits the app-facing interface from Wiring
-# this is so that base class can be used for testing outside the hardware devive
+# this is so that base class can be used for testing outside the hardware device
 # and this implementation can be used inside the device
 
 from wiring import Wiring
@@ -52,6 +52,10 @@ class IrqPinEventHandler(object):
 class RGB(object):
     COLORS = {
         'red': (20, 0, 0),
+        'green': (0, 20, 0),
+        'blue': (0, 0, 20),
+        'yellow': (20, 20, 0),
+        'white': (20, 20, 20),
         'off': (0, 0, 0)
     }
 
@@ -70,6 +74,10 @@ class RGB(object):
 
 
 class WiringESP32(Wiring):
+    def __init__(self, **kwargs):
+        self._event_trigger_fn = self.trigger_event  # store a reference to the bound function
+        super(WiringESP32, self).__init__(**kwargs)
+
     def lightsleep(self, time_ms):
         lightsleep(time_ms)
 
@@ -79,8 +87,6 @@ class WiringESP32(Wiring):
 
         self._rgb = RGB(self.config.get('RGB_PIN', 48))
         self._rgb.value('off')
-
-        self._event_trigger_fn = self.trigger_event  # store a reference to the bound function
 
         self._btn1 = Pin(self.config.get('BTN1_PIN', 4), Pin.IN)
         self._btn1.irq(handler=self.btn1_irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING)
@@ -114,7 +120,6 @@ class WiringESP32(Wiring):
 
         return wake_reason
 
-
         # if reset_cause is machine.HARD_RESET:
         #     reset_cause = 'HARD_RESET'
         # elif reset_cause is machine.PWRON_RESET:
@@ -139,4 +144,3 @@ class WiringESP32(Wiring):
         #     wake_reason = 'TOUCHPAD_WAKE'
         # elif wake_reason is machine.ULP_WAKE:
         #     wake_reason = 'ULP_WAKE'
-

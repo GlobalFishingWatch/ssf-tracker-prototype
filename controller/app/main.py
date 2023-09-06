@@ -6,14 +6,15 @@
 
 # from config import load_config
 # from config import configure_logger
-from app import App
-from wiring_esp32 import WiringESP32
 
-app_config = {
-
-}
-app = App.from_settings('./config.json', wiring_type=WiringESP32)
-app.initialize()
+# from app import App
+# from wiring_esp32 import WiringESP32
+#
+# app_config = {
+#
+# }
+# app = App.from_settings('./config.json', wiring_type=WiringESP32)
+# app.initialize()
 
 # # LOAD CONFIG
 # config_filename = './config.json'
@@ -147,4 +148,4 @@ def blink():
 # run_test_deep_sleep()
 # run_test_light_sleep()
 # run_test_sleep()
-blink()
+# blink()

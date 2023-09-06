@@ -15,3 +15,4 @@ https://store-usa.arduino.cc/products/arduino-nano-33-iot?selectedStore=us
 ## GPS modules
 ### Adafruit Ultimate GPS
 https://learn.adafruit.com/adafruit-ultimate-gps/pinouts
+

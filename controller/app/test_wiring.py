@@ -6,7 +6,7 @@ class TestWiring(unittest.TestCase):
 
     def setUp(self):
         config = {}
-        self.wiring = MockWiring(config, btn1_up_event=MockEvent('btn_up'), btn1_down_event=MockEvent('btn_down'))
+        self.wiring = MockWiring(config=config, btn1_up_event=MockEvent('btn_up'), btn1_down_event=MockEvent('btn_down'))
         self.wiring.initialize()
 
     def test_wiring(self):
