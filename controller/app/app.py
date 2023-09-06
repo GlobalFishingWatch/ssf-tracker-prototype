@@ -1,10 +1,10 @@
 # Main application
 import ujson as json
 
-from config import default_logger
-from config import load_config
-from config import save_config
-from config import configure_logger
+from util import default_logger
+from util import load_config
+from util import save_config
+from util import configure_logger
 from config import default_app_state
 
 from statemachine import StateMachine

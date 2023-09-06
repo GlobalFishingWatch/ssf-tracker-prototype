@@ -24,7 +24,7 @@ import unittest
 # when running on the device
 from test_app import TestApp, TestAppTransitions
 from test_button import TestButton
-from test_config import TestConfig
+from test_util import TestUtil
 from test_statemachine import TestStateMachine
 from test_timer import TestTimer
 from test_wiring import TestWiring
@@ -36,7 +36,7 @@ def run_all_tests_esp32():
     suite.addTest(TestApp())
     suite.addTest(TestAppTransitions())
     suite.addTest(TestButton())
-    suite.addTest(TestConfig())
+    suite.addTest(TestUtil())
     suite.addTest(TestStateMachine())
     suite.addTest(TestTimer())
     suite.addTest(TestWiring())

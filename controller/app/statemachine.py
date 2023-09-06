@@ -1,7 +1,6 @@
 # A basic state machine
-from config import default_logger
+from util import default_logger
 from collections import deque
-import ujson as json
 
 
 class State(object):
@@ -18,7 +17,10 @@ class State(object):
 
 
 class Event(object):
+    # NB: there is a built-in deque in some micropython builds that takes 2 positional params
+    # If you get an error here, then you want to make sure you are using collections-deque from micropython-lib
     event_queue = deque()
+
 
     def __init__(self, name, machine, **kwargs):
         self.name = name

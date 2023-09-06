@@ -3,15 +3,15 @@ import tempfile
 import ujson as json
 
 
-from config import load_config
-from config import save_config
-from config import LogFormatter
-from config import configure_logger
-from config import default_config
+from util import load_config
+from util import save_config
+from util import LogFormatter
+from util import configure_logger
+from util import default_config
 from logging import FileHandler
 
 
-class TestConfig(unittest.TestCase):
+class TestUtil(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory
         self._temp_dir = tempfile.TemporaryDirectory()
