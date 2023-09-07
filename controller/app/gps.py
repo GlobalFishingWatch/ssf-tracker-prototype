@@ -5,11 +5,6 @@ from statemachine import Transition
 from statemachine import StateMachine
 from timer import Timer
 
-# class Location(object):
-#     def __init__(self, lat = 0, lon = 0, timestamp = 0):
-#         self.lat = lat
-#         self.lon = lon
-#         self.timestamp = timestamp
 
 class MockGPS(StateMachine):
     states = [

@@ -49,9 +49,9 @@ class Event(object):
 class MockEvent(Event):
     # Event class for testing.  Does not do anything other than count the
     # number of times that the event has benn triggered
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self.trigger_count = 0
-        super(MockEvent, self).__init__(name=name, machine=None)
+        super(MockEvent, self).__init__(name=name, machine=None, **kwargs)
 
     def _trigger(self):
         pass

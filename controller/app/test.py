@@ -29,6 +29,7 @@ from test_statemachine import TestStateMachine
 from test_timer import TestTimer
 from test_wiring import TestWiring
 from test_gps import TestMockGPS
+from test_transmitter import TestMockTransmitter
 
 
 def run_all_tests_esp32():
@@ -41,6 +42,7 @@ def run_all_tests_esp32():
     suite.addTest(TestTimer())
     suite.addTest(TestWiring())
     suite.addTest(TestMockGPS())
+    suite.addTest(TestMockTransmitter())
 
     # include tests that will only run on the ESP32
     from test_esp32 import TestWiringEsp32
