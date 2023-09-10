@@ -91,7 +91,7 @@ class GPS:
         self.speed_knots = None
         self.track_angle_deg = None
 
-    def update(self):
+    def update(self, echo=False):
         """Check for updated data from the GPS module and process it
         accordingly.  Returns True if new data was processed, and False if
         nothing new was received.
@@ -103,6 +103,8 @@ class GPS:
             return False
         data_type, args = sentence
         data_type = data_type.upper()
+        if echo:
+            print(data_type.decode(), args.decode())
         if data_type == b'GPGGA':      # GGA, 3d location fix
             self._parse_gpgga(args)
         elif data_type == b'GPRMC':    # RMC, minimum location info

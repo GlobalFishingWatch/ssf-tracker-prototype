@@ -38,5 +38,8 @@ Run this test for a couple of days and see what the timings look like
 * Or just sleep for a short period like 500ms and then wake and check
 * Measure to see if this extra complexity reduces overall power consumption
 
+#### Test 3
+
+* Try using the built-in LOCUS logger in low power mode and let the controller deepsleep for a longer time, waking up to collect the logged positions once per hour
 
 
