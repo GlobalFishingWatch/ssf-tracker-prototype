@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SSF Tracker App BLE Dashboard</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
+<!--  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>-->
+<!--  <script src="GLTFLoader.js"></script>-->
+  <style>
+
+  body {
+    font-family: 'Roboto', sans-serif; color: #888888; background: #000000; font-size: small;
+  }
+
+  #bigButton {
+    background-color: aqua; border: none; color: black; padding: 1px; text-align: center;
+    text-decoration: none; font-size: 6px; margin: 12px 20px; height: 15px; width: 30px;
+    border-radius: 10%; outline:none; font-family: 'Roboto', sans-serif;
+  }
+
+  #ledButton {
+    background-color: aqua; border: none; color: black; padding: 1px; text-align: center;
+    text-decoration: none; font-size: 6px; margin: 12px 20px; height: 15px; width: 30px;
+    border-radius: 10%; outline:none; font-family: 'Roboto', sans-serif;
+  }
+
+  .container {
+    width:960px;height:384px;margin-top:30px;margin-bottom:7.5px;  margin: 0 auto;
+  }
+
+  .widget {
+    background: #111111;
+    border: 1px solid #000000;
+    border-radius: 0px;
+    padding: 12px;
+    margin: 6px;
+    float: left;
+  }
+
+  .status {
+    background-image: url("logo.png");
+    background-size: 80px;
+    background-position: 98% 50%;
+    background-repeat: no-repeat;
+    width: 885px;  height: 42px;
+    color: white;
+  }
+
+  .square {
+    width: 192px;  height: 192px;
+    position: relative;
+  }
+
+  .label {
+    height: 15px;
+    display: inline;
+    font-size: 15px;
+  }
+
+  .digit {
+    font-size: 30px;
+    color: #888888;
+    float: right;
+  }
+
+  .short {width: 192px;  height: 96px;}
+  .double {width: 423px;  height: 192px;}
+  .graph{width: 192px;  height: 177px;}
+  .doublegraph{width: 423px;  height: 177px;}
+  .shortgraph{width: 192px;  height: 81px;}
+
+  #color-picker-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  input:checked + .slider {
+    background-color: #2196F3;
+  }
+
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+
+  input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!--div class="label">&nbsp;&nbsp;IMPORTANT - first upload <a href="https://create.arduino.cc/editor/dpajak/e4128780-d76d-438f-97a4-541740cb0473/preview">sketch</a> to Arduino Nano 33 BLE Sense board<br></div-->
+    <div class="status widget">
+      <button id="bigButton"></button>
+      <div class="label" id="bluetooth">Click button to connect to the board</div>
+    </div>
+
+    <div class="square widget">
+      <div class="label">&#128161;LED control</div>
+      <label class="switch">
+        <input type="checkbox" id="ledButton">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+  </div>
+</body>
+<script type="text/javascript">
+/*
+Demo showing simple dashboard of Arduino Nano 33 IoT
+
+Based on: https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
+For earlier versions of Windows and Linux, you still have to go to chrome://flags/#enable-experimental-web-platform-features,
+enable the highlighted flag, and restart Chrome for now.
+*/
+
+
+
+var maxRecords = 64;
+
+var BLEsense =
+{
+  led:{
+    uuid: '19B10001-E8F2-537E-4F6C-D104768A1214'.toLowerCase(),
+    properties: ['BLERead', 'BLEWrite'],
+    structure: ['Uint8'],
+    data: {'state':[]},
+    writeBusy: false, // we need to track this to avoid 'GATT operation in progress' errors
+    writeValue: null
+  }
+}
+
+
+const sensors = Object.keys(BLEsense);
+const SERVICE_UUID = '19B10000-E8F2-537E-4F6C-D104768A1214'.toLowerCase();
+var bytesReceived = 0;
+var bytesPrevious = 0;
+
+// UI elements
+const bigButton = document.getElementById('bigButton');
+const BLEstatus = document.getElementById('bluetooth');
+const ledButton = document.getElementById('ledButton');
+
+if ("bluetooth" in navigator) {
+  bigButton.addEventListener('click', function(event) {
+    connect();
+  });
+  // else the browser doesn't support bluetooth
+} else {
+  msg("browser not supported"); bigButton.style.backgroundColor = "red";
+  alert("Error: This browser doesn't support Web Bluetooth. Try using Chrome.");
+}
+
+function msg(m){
+  BLEstatus.innerHTML = m;
+}
+
+async function connect() {
+  bigButton.style.backgroundColor="grey";
+  msg('requesting device ...');
+
+  const device = await navigator.bluetooth.requestDevice({
+    filters: [
+      {
+        services: [SERVICE_UUID] // SERVICE_UUID
+      }
+    ]
+  });
+
+  msg('connecting to device ...');
+  device.addEventListener('gattserverdisconnected', onDisconnected);
+  const server = await device.gatt.connect();
+
+  msg('getting primary service ...');
+  const service = await server.getPrimaryService(SERVICE_UUID);
+
+  // Set up the characteristics
+  for (const sensor of sensors) {
+    msg('characteristic '+sensor+"...");
+    BLEsense[sensor].characteristic = await service.getCharacteristic(BLEsense[sensor].uuid);
+    // Set up notification
+    if (BLEsense[sensor].properties.includes("BLENotify")){
+      BLEsense[sensor].characteristic.addEventListener('characteristicvaluechanged',function(event){handleIncoming(BLEsense[sensor],event.target.value);});
+      await BLEsense[sensor].characteristic.startNotifications();
+    }
+    // Set up polling for read
+    if (BLEsense[sensor].properties.includes("BLERead")){
+      BLEsense[sensor].polling = setInterval(function() {
+        BLEsense[sensor].characteristic.readValue().then(function(data){handleIncoming(BLEsense[sensor],data);})}
+        , 500);
+      }
+
+      BLEsense[sensor].rendered = false;
+    }
+    bigButton.style.backgroundColor = 'green';
+    msg('connected.');
+
+    initLEDButton();
+<!--    initColorPicker();-->
+  }
+
+  function handleIncoming(sensor, dataReceived) {
+    const columns = Object.keys(sensor.data); // column headings for this sensor
+    const typeMap = {
+      "Uint8":    {fn:DataView.prototype.getUint8,    bytes:1},
+      "Uint16":   {fn:DataView.prototype.getUint16,   bytes:2},
+      "Float32":  {fn:DataView.prototype.getFloat32,  bytes:4}
+    };
+    var packetPointer = 0,i = 0;
+
+    // Read each sensor value in the BLE packet and push into the data array
+    sensor.structure.forEach(function(dataType){
+      // Lookup function to extract data for given sensor property type
+      var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
+      // Read sensor ouput value - true => Little Endian
+      var unpackedValue = dataViewFn(packetPointer,true);
+      // Push sensor reading onto data array
+      sensor.data[columns[i]].push(unpackedValue);
+      // Keep array at buffer size
+      if (sensor.data[columns[i]].length> maxRecords) {sensor.data[columns[i]].shift();}
+      // move pointer forward in data packet to next value
+      packetPointer += typeMap[dataType].bytes;
+      bytesReceived += typeMap[dataType].bytes;
+      i++;
+    });
+    sensor.rendered = false; // flag - vizualization needs to be updated
+  }
+
+  function onDisconnected(event) {
+    let device = event.target;
+    bigButton.style.backgroundColor="red";
+    // clear read polling
+    for (const sensor of sensors) {
+      if(typeof BLEsense[sensor].polling !== 'undefined'){
+        clearInterval(BLEsense[sensor].polling);
+      }
+    }
+    // clear color picker write
+    const colorPickerElement = document.getElementById("color-picker-container");
+    colorPickerElement.removeChild(colorPickerElement.firstChild);
+
+    msg('Device ' + device.name + ' is disconnected.');
+  }
+
+  function BLEwriteTo(sensor){
+    if (BLEsense[sensor].writeBusy) return; // dropping writes when one is in progress instead of queuing as LED is non-critical / realtime
+    BLEsense[sensor].writeBusy = true; // Ensure no write happens when GATT operation in progress
+    BLEsense[sensor].characteristic.writeValue(BLEsense[sensor].writeValue)
+    .then(_ => {
+      BLEsense[sensor].writeBusy = false;
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  }
+
+
+  </script>
+  <script>
+
+  function toggleLed(){
+     let new_state = ledButton.checked ? 0x1 : 0x0;
+     BLEsense['led'].writeValue = Uint8Array.of(new_state);
+     BLEwriteTo('led');
+  }
+
+  function initLEDButton(){
+    ledButton.addEventListener('click', function(event) {
+      toggleLed();
+    });
+    ledButton.style.backgroundColor = 'green';
+  };
+
+  function initColorPicker(){
+    BLEsense.led.colorPicker = new iro.ColorPicker("#color-picker-container", {
+      width: 150,
+      color: "rgb(255, 0, 0)",
+      borderWidth: 1,
+      borderColor: "#fff",
+      sliderHeight: 6,
+      sliderMargin: 6
+    });
+    // RGB Color Picker
+    BLEsense.led.colorPicker.on('color:change', updateModelLed);
+    function updateModelLed(color){
+      BLEsense['led'].writeValue = Uint8Array.of(0x1);
+      BLEwriteTo('led');
+    }
+  }
+
+  // Graphing
+  const colors = ["#FF355E","#FD5B20","#FF6037","#FF9966","#FF9933","#FFCC33","#FFFF66","#FFFF66","#CCFF00","#66FF66","#AAF0D1","#50BFE6","#FF6EFF","#EE34D2","#FF00CC","#FF00CC"];
+  var colorIndex = 0;
+  function initGraph(sensor){
+    var title = sensor;
+    var series = Object.keys(BLEsense[sensor].data);
+    var format = [];
+    series.forEach(function(item){
+      colorIndex++;
+      if (colorIndex>colors.length) {colorIndex=0;}
+      format.push({
+        y: [],
+        name: item,
+        mode: 'lines',
+        width: 1,
+        line: {width: 1,color: colors[colorIndex]}
+      });
+    });
+
+    Plotly.plot(title,format,{
+      plot_bgcolor: '#111111',
+      paper_bgcolor: '#111111',
+      margin: {l:8,r:8,b:18,t:18},
+      showlegend: false,
+      yaxis: {'showticklabels':false},
+      xaxis: {
+        'range': [0,maxRecords],
+      'showticklabels':false,
+        'autorange': false,
+        'showgrid': true,
+  'zeroline': true,
+        tickfont: {size: 8}
+      }
+    }
+  );
+}
+
+// Microphone spectrum analyser
+function initSpectrum(){
+  var canvas = document.getElementById('mic');
+  const micctx = canvas.getContext('2d');
+  const bucketLabels = Object.keys(BLEsense['microphone'].data);
+  micctx.fillStyle = "#111111";//"rgba("+R+","+G+","+B+")";
+  micctx.fillRect(0, 0, canvas.width, canvas.height);
+  const thickness = canvas.width / bucketLabels.length;
+  canvas = document.getElementById('micbg');
+  const bgctx = canvas.getContext('2d');
+  bgctx.fillStyle = "#111111";
+  bgctx.fillRect(0, 0, 256, 118);
+  var r = 255; g = 0; b = 0;
+
+  for (j=0;j<256;j+=2){
+    for (i=0;i<32;i++){
+      g++;
+      if (j>64) {r-=2;}
+      bgctx.fillStyle = "rgba("+r+","+g+","+b+")";
+      bgctx.fillRect(i*thickness, j, thickness-1, 1);
+    }
+  }
+}
+
+
+function colorBars(sensor){
+  // Color + light
+  const canvas = document.getElementById('colors');
+  const ctx = canvas.getContext('2d');
+  const thickness = canvas.width/maxRecords;
+  ctx.fillStyle = "#111111";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (i=0;i<maxRecords;i++){
+    R = BLEsense[sensor].data.R[i];
+    G = BLEsense[sensor].data.G[i];
+    B = BLEsense[sensor].data.B[i];
+    total = R + G + B;
+    R=R/total*255;G=G/total*255;B=B/total*255;
+    ctx.fillStyle = "rgba("+R+","+G+","+B+")";
+    ctx.fillRect(i*thickness, 128, thickness-1, -total/5);
+  }
+}
+// return last item of array
+Array.prototype.latest = function(){return this[this.length - 1];};
+
+function spectrumAnalyser(sensor){
+  const canvas = document.getElementById('mic');
+  const micctx = canvas.getContext('2d');
+  const bucketLabels = Object.keys(BLEsense[sensor].data);
+  const thickness = canvas.width / bucketLabels.length;
+  micctx.fillStyle = "#111111";
+  micctx.fillRect(0, 0, canvas.width, canvas.height); // mask bars beneath
+  for (i=0;i<bucketLabels.length;i++){
+    var value = BLEsense[sensor].data[bucketLabels[i]].latest(); // display for latest record
+    micctx.clearRect(i*thickness, 128, thickness-1, -value);
+  }
+  spectrogram(sensor);
+}
+
+function spectrogram(sensor){
+  const canvas = document.getElementById('spectrogram');
+  const ctx = canvas.getContext('2d');
+  const bucketLabels = Object.keys(BLEsense[sensor].data);
+  const records = BLEsense[sensor].data[bucketLabels[1]].length;
+  const vthickness = 128/maxRecords;
+  const thickness = canvas.width / bucketLabels.length;
+  ctx.fillStyle = "#111111";
+  ctx.fillRect(0, 0, 256, 256);
+  for (i=0;i<bucketLabels.length;i++){ // for each fft bucket
+    for (j=0;j<records;j++){ // for each record of that bucket
+      var value = ((BLEsense[sensor].data[bucketLabels[i]][j])/255);
+      var hue = (1 - value) * 240;
+      ctx.fillStyle = "hsl("+hue+",100%,50%)";
+      if (value<0.02) {ctx.fillStyle = "#111111";}
+      ctx.fillRect(i*thickness,j*vthickness, thickness-1,vthickness-1);}
+    }
+  }
+
+  function graph(sensor){
+    var labels = Object.keys(BLEsense[sensor].data);
+    var values = [];
+    // after
+    labels.forEach(function(label){
+      values.push(BLEsense[sensor].data[label]);
+    });
+    Plotly.restyle(sensor, {y: values});
+  }
+
+  function digit(sensor){
+    const value = BLEsense[sensor].data[sensor].latest();
+    const div = document.getElementById(sensor+"-value");
+    if (!Number.isNaN(value)) {div.innerHTML = Math.round(value*10)/10;};
+  }
+
+  function update3d(sensor){
+    var Ax = BLEsense['accelerometer'].data.Ax.latest() * 0.0174533;
+    var Ay = BLEsense['accelerometer'].data.Ay.latest() * 0.0174533;
+    var Az = BLEsense['accelerometer'].data.Az.latest() * 0.0174533;
+    var pitch = Math.atan2((-Ax) , Math.sqrt(Ay * Ay + Az * Az));
+    var roll = Math.atan2(Ay , Az);
+    arduinoModel.rotation.x = roll;
+    arduinoModel.rotation.y = pitch;
+    arduinoModel.rotation.z = 0;
+    renderer.render(scene, camera);
+  }
+
+  function bytes(){
+    if (bytesReceived > bytesPrevious){
+      bytesPrevious= bytesReceived;
+      msg(bytesReceived+" bytes received");
+    }
+  }
+
+  var skip_frame = false;
+  function draw(){
+    function updateViz(sensor,fns){
+      if (BLEsense[sensor].rendered == false) { // only render if new values are received
+        fns.forEach(function(fn){
+          fn(sensor);
+        });
+        BLEsense[sensor].rendered = true;
+      }
+    }
+    if (skip_frame == false){ // TODO update with fuction to iterate object with viz function as a property
+      updateViz('colorimeter', [colorBars]);
+      updateViz('microphone', [spectrumAnalyser]);
+      updateViz('gyroscope', [graph]);
+      updateViz('accelerometer', [graph,update3d]);
+      updateViz('proximity', [digit]);
+      updateViz('temperature', [graph,digit]);
+      updateViz('humidity', [graph,digit]);
+      updateViz('pressure', [graph,digit]);
+      //bytes();
+
+      skip_frame = true; // render alternate frames = 30fps
+    } else {skip_frame=false;}
+    requestAnimationFrame(draw);
+  }
+
+<!--  initGraph('accelerometer');-->
+<!--  initGraph('gyroscope');-->
+<!--  initGraph('temperature');-->
+<!--  initGraph('humidity');-->
+<!--  initGraph('pressure');-->
+<!--  initSpectrum();-->
+<!--  init3D();-->
+<!--  requestAnimationFrame(draw);-->
+  </script>
+  </html>
