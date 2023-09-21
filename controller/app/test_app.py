@@ -97,6 +97,20 @@ class TestApp(unittest.TestCase):
         self.app.tick()
         self.assertEqual(self.app.wiring.led1, 0)
 
+    def test_app_locating(self):
+        self.assertEqual(self.app.wiring.gps_enable, 0)
+        self.app.tick()
+        self.app.trigger_event('gps_timer')
+        self.app.tick()
+        self.assertEqual(self.app.wiring.gps_enable, 1)
+        self.assertTrue(self.app.wiring.gps_timer.active)
+        self.assertEqual(self.app.wiring.gps_timer.event.name, 'gps_ready')
+        self.app.trigger_event('gps_ready')
+        self.app.tick()
+        self.assertEqual(self.app.wiring.gps_enable, 0)
+        self.assertEqual(len(self.app.locations), 1)
+
+
 
 class TestAppTransitions(EventTestRunner):
     def setUp(self):
@@ -115,10 +129,11 @@ class TestAppTransitions(EventTestRunner):
             ('TestApp', None, 0, 'idle'),     # transition from boot to idle happens immediately
             ('TestApp', 'idle_timeout', 0, 'sleep'),  # advance the timer to trigger event 'idle_timeout'
             ('TestApp', 'timer_wake', 0, 'idle'),
-            ('MockGPS1', None, 0, 'sleep'),  # gps should be sleeping
             ('TestApp', 'gps_timer', 0, 'locating'),
-            ('MockGPS1', None, 0, 'locating'),  # gps should now be active
-            ('MockGPS1', 'gps_ready', 0, 'sleep'),  # gps should now be active
+            ('TestApp', None, MockWiring.MOCK_TIME_TO_FIX_MS, None),
+            ('TestApp', None, 0, 'idle'),
+            ('TestApp', 'gps_timer', 0, 'locating'),
+            ('TestApp', 'gps_timeout', 0, 'idle'),
         ]
         self.run_events(events)
 

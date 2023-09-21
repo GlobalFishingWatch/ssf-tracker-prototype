@@ -1,5 +1,4 @@
 # Main application
-import ujson as json
 
 from util import default_logger
 from util import load_config
@@ -13,9 +12,10 @@ from statemachine import Transition
 from statemachine import Event
 from button import Button
 from timer import Timer
-from gps import MockGPS
+# from gps import MockGPS
 
 from wiring import MockWiring
+
 
 class App(StateMachine):
     states = [
@@ -33,8 +33,9 @@ class App(StateMachine):
         Transition(event='btn1_released', after='on_btn1_released'),
         Transition(event='gps_timer', source='idle', dest='locating'),
         Transition(event='gps_ready', source='locating', dest='idle', before='on_gps_ready'),
+        Transition(event='gps_timeout', source='locating', dest='idle', before='on_gps_failed'),
 
-        # Catch the gps_timer event in case we were not it the idle state and can't move to locating yet
+        # Catch the gps_timer event in case we were not it the `idle` state and can't transition to `locating` state
         Transition(event='gps_timer', after='retry_event'),
     ]
 
@@ -46,7 +47,6 @@ class App(StateMachine):
         log.debug('Creating App...')
         app = cls(wiring=wiring, config=app_config, log=log, **kwargs)
         return app
-
 
     def __init__(self, wiring, config=None, log=None, **kwargs):
         self.wiring = wiring
@@ -61,7 +61,7 @@ class App(StateMachine):
         self.idle_timer = Timer(event=self.get_event('idle_timeout'),
                                 duration_ms=self.config.get('IDLE_TIMEOUT_MS', 1000),
                                 recurring=True)
-        self.gps = MockGPS(on_ready_event=self.get_event('gps_ready'))
+        # self.gps = MockGPS(on_ready_event=self.get_event('gps_ready'))
         self.gps_timer = Timer(event=self.get_event('gps_timer'),
                                duration_ms=self.config.get('GPS_FIX_INTERVAL_MS', 10000),
                                recurring=True)
@@ -69,8 +69,9 @@ class App(StateMachine):
 
     def initialize(self):
         self.log.debug(f'{self.name} initialize...')
-        self.wiring.btn_down_event=self.button1.get_event('btn_down')
-        self.wiring.btn_up_event=self.button1.get_event('btn_up')
+        self.wiring.btn_down_event = self.button1.get_event('btn_down')
+        self.wiring.btn_up_event = self.button1.get_event('btn_up')
+        self.wiring.gps_fix_event = self.get_event('gps_ready')
         self.wiring.initialize()
         wake_reason = self.wiring.wake_reason()
         self.log.debug(f'Wake reason: {wake_reason}')
@@ -138,7 +139,6 @@ class App(StateMachine):
         )
         return not sleep_blocked
 
-
     def on_sleep(self, event):
         self.idle_timer.cancel()
 
@@ -164,7 +164,8 @@ class App(StateMachine):
 
     def on_locating(self, event):
         # start to fix a new gps location
-        self.gps.schedule_event('locate')
+        # self.gps.schedule_event('locate')
+        self.wiring.gps_wake()
 
     def retry_event(self, event):
         # retry an event after a delay
@@ -173,8 +174,14 @@ class App(StateMachine):
         t.reset()
 
     def on_gps_ready(self, event):
-        self.locations.append(self.gps.last_location)
-        self.gps.schedule_event('sleep')
+        # self.locations.append(self.gps.last_location)
+        # self.gps.schedule_event('sleep')
+        self.locations.append(event.kwargs)
+        self.wiring.gps_sleep()
+
+    def on_gps_failed(self, event):
+        # self.gps.schedule_event('sleep')
+        self.wiring.gps_sleep()
 
     def save_state(self):
         state = super(App, self).save_state()

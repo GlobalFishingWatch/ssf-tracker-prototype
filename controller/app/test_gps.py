@@ -1,10 +1,11 @@
 import unittest
 
-from gps import MockGPS
+from gps import GPS
 from timer import MockTime
 from timer import Timer
 from statemachine import MockEvent
 from statemachine import Event
+from wiring import MockWiring
 
 
 class TestMockGPS(unittest.TestCase):
@@ -12,6 +13,11 @@ class TestMockGPS(unittest.TestCase):
     def setUp(self):
         self.mock_time = MockTime()
         self.mock_time.setup()
+        self.config = {}
+        self.wiring = MockWiring(config=self.config, on_ready_event=MockEvent('gps_ready'))
+        self.machine = GPS(wiring=self.wiring)
+        self.wiring.gps_fix_event = self.machine.get_event('gps_ready')
+        self.wiring.initialize()
 
     def tearDown(self):
         self.mock_time.tearDown()

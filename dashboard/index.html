@@ -11,13 +11,27 @@
   <style>
 
   body {
-    font-family: 'Roboto', sans-serif; color: #888888; background: #000000; font-size: small;
+    font-family: 'Roboto Mono', sans-serif; color: #888888; background: #000000; font-size: small;
   }
 
-  #bigButton {
-    background-color: aqua; border: none; color: black; padding: 1px; text-align: center;
-    text-decoration: none; font-size: 6px; margin: 12px 20px; height: 15px; width: 30px;
-    border-radius: 10%; outline:none; font-family: 'Roboto', sans-serif;
+  #pairButton {
+    background-color: #d8f41d;
+    border: none;
+    color: black;
+    padding: 1px;
+    text-align: center;
+    text-decoration: none;
+
+    margin: 8px 18px;
+    height: 25px;
+    width: 100px;
+    border-radius: 10%;
+    outline: none;
+
+    border-radius: 20px;
+    grid-column: 1;
+
+    cursor: pointer;
   }
 
   #ledButton {
@@ -143,7 +157,7 @@
   <div class="container">
     <!--div class="label">&nbsp;&nbsp;IMPORTANT - first upload <a href="https://create.arduino.cc/editor/dpajak/e4128780-d76d-438f-97a4-541740cb0473/preview">sketch</a> to Arduino Nano 33 BLE Sense board<br></div-->
     <div class="status widget">
-      <button id="bigButton"></button>
+      <button id="pairButton">CONNECT</button>
       <div class="label" id="bluetooth">Click button to connect to the board</div>
     </div>
 
@@ -189,17 +203,17 @@ var bytesReceived = 0;
 var bytesPrevious = 0;
 
 // UI elements
-const bigButton = document.getElementById('bigButton');
+const pairButton = document.getElementById('pairButton');
 const BLEstatus = document.getElementById('bluetooth');
 const ledButton = document.getElementById('ledButton');
 
 if ("bluetooth" in navigator) {
-  bigButton.addEventListener('click', function(event) {
+  pairButton.addEventListener('click', function(event) {
     connect();
   });
   // else the browser doesn't support bluetooth
 } else {
-  msg("browser not supported"); bigButton.style.backgroundColor = "red";
+  msg("browser not supported"); pairButton.style.backgroundColor = "red";
   alert("Error: This browser doesn't support Web Bluetooth. Try using Chrome.");
 }
 
@@ -208,7 +222,9 @@ function msg(m){
 }
 
 async function connect() {
-  bigButton.style.backgroundColor="grey";
+  pairButton.style.backgroundColor="grey";
+  pairButton.style.color = 'black';
+  pairButton.innerHTML = "PAIRING";
   msg('requesting device ...');
 
   const device = await navigator.bluetooth.requestDevice({
@@ -244,7 +260,9 @@ async function connect() {
 
       BLEsense[sensor].rendered = false;
     }
-    bigButton.style.backgroundColor = 'green';
+    pairButton.style.backgroundColor = 'green';
+    pairButton.style.color = 'white';
+    pairButton.innerHTML = "PAIRED";
     msg('connected.');
 
     initLEDButton();
@@ -280,7 +298,8 @@ async function connect() {
 
   function onDisconnected(event) {
     let device = event.target;
-    bigButton.style.backgroundColor="red";
+    pairButton.style.backgroundColor="red";
+    pairButton.innerHTML = "PAIR NICLA";
     // clear read polling
     for (const sensor of sensors) {
       if(typeof BLEsense[sensor].polling !== 'undefined'){
@@ -288,8 +307,8 @@ async function connect() {
       }
     }
     // clear color picker write
-    const colorPickerElement = document.getElementById("color-picker-container");
-    colorPickerElement.removeChild(colorPickerElement.firstChild);
+<!--    const colorPickerElement = document.getElementById("color-picker-container");-->
+<!--    colorPickerElement.removeChild(colorPickerElement.firstChild);-->
 
     msg('Device ' + device.name + ' is disconnected.');
   }

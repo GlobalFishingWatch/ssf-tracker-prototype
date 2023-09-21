@@ -6,10 +6,12 @@
 
 from wiring import Wiring
 from machine import Pin
+from machine import UART
 from machine import lightsleep
 import machine
 import micropython
 import neopixel
+import nmea
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -25,28 +27,28 @@ micropython.alloc_emergency_exception_buf(100)
 #    handler = IrqPinEventHandler(pin_rising_event=up_event, pin_falling_event=down_event)
 #    btn.irq(handler=handler.handle_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING)
 #
-class IrqPinEventHandler(object):
-    def __init__(self, event=None):
-        self.schedule_fn = self.dispatch
-        self.event = event
-
-    def handle_irq(self, pin):
-        # handle the immediate interrupt
-        # We can't allocate memory or use floating point inside irg handlers, so
-        # don't do any work here - just schedule a callback that will run in the main thread
-        #
-        # NOTE: we store the callback function in __init__ because creating a bound function
-        # allocates memory, so we can't do that here.
-        #
-        # see: https://docs.micropython.org/en/latest/reference/isr_rules.html
-        micropython.schedule(self.schedule_fn, pin.irq().flags())
-
-    def dispatch(self, pin_flags):
-        # trigger the event
-        if pin_flags & Pin.IRQ_RISING:
-            self.event.trigger()
-        elif pin_flags & Pin.IRQ_FALLING:
-            self.event.trigger()
+# class IrqPinEventHandler(object):
+#     def __init__(self, event=None):
+#         self.schedule_fn = self.dispatch
+#         self.event = event
+#
+#     def handle_irq(self, pin):
+#         # handle the immediate interrupt
+#         # We can't allocate memory or use floating point inside irg handlers, so
+#         # don't do any work here - just schedule a callback that will run in the main thread
+#         #
+#         # NOTE: we store the callback function in __init__ because creating a bound function
+#         # allocates memory, so we can't do that here.
+#         #
+#         # see: https://docs.micropython.org/en/latest/reference/isr_rules.html
+#         micropython.schedule(self.schedule_fn, pin.irq().flags())
+#
+#     def dispatch(self, pin_flags):
+#         # trigger the event
+#         if pin_flags & Pin.IRQ_RISING:
+#             self.event.trigger()
+#         elif pin_flags & Pin.IRQ_FALLING:
+#             self.event.trigger()
 
 
 class RGB(object):
@@ -90,6 +92,30 @@ class WiringESP32(Wiring):
 
         self._btn1 = Pin(self.config.get('BTN1_PIN', 4), Pin.IN)
         self._btn1.irq(handler=self.btn1_irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING)
+
+        self._gps_enable = Pin(self.config.get('GPS_ENABLE_PIN', 8), Pin.OUT)
+        self._gps_enable.value(1)
+
+        self._gps_uart = UART(1, baudrate=9600)     # Pins 9 and 10 on the EPS32 DEV C board
+
+        # Turn on just minimum info (RMC only, basic location):
+        self._gps_uart.write(nmea.create_sentence('PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0'))
+        self._gps_uart.write('\r\n')
+
+        # Set update rate to once a second (1hz) which is what you typically want.
+        self._gps_uart.write(nmea.create_sentence('PMTK220,1000'))
+        self._gps_uart.write('\r\n')
+
+    def gps_update(self):
+        sentence = self._gps_uart.readline()
+        if sentence:
+            sentence = sentence.decode().strip()
+            message = nmea.parse_sentence(sentence)
+            if 'error' not in message and message.get('sentence_type') == 'GPRMC':
+                if message['fix_quality'] is not None and message['fix_quality'] >= 1:
+                    # we have a fix, so store the fix details and trigger event
+                    self.gps_fix_event.kwargs = message
+                    self.gps_fix_event.schedule()
 
     def btn1_irq_handler(self, pin):
         # handle the immediate interrupt

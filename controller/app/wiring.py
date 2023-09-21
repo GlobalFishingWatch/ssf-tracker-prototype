@@ -7,23 +7,27 @@
 # For use on the device, you should use a hardware specific subclass of Wiring
 
 import time
+from timer import Timer
 
 
 class Wiring(object):
     """
     Abstract base class that provides an interface to the device hardware.   You must create a subclass
-    that implemented initialize().  Use MockWiring for a non-functional test interface or use a hardware
+    that implements initialize().  Use MockWiring for a non-functional test interface or use a hardware
     specific subclass
     """
     def __init__(self, config,
                  btn1_up_event=None,
-                 btn1_down_event=None):
+                 btn1_down_event=None,
+                 gps_fix_event=None):
         self.config = config
         self.btn_up_event = btn1_up_event
         self.btn_down_event = btn1_down_event
+        self.gps_fix_event = gps_fix_event
         self._led1 = None
         self._rgb = None
         self._btn1 = None
+        self._gps_enable = None
         self._wake_reason = 'RESET'
 
     def initialize(self):
@@ -49,6 +53,14 @@ class Wiring(object):
     def btn1(self):
         return self._btn1.value()
 
+    @property
+    def gps_enable(self):
+        return self._gps_enable.value()
+
+    @gps_enable.setter
+    def gps_enable(self, value):
+        self._gps_enable.value(value)
+
     def trigger_event(self, event):
         if event:
             event.trigger()
@@ -68,15 +80,29 @@ class Wiring(object):
     def wake_reason(self):
         return self._wake_reason
 
+    def gps_wake(self):
+        self._gps_enable.value(1)
+
+    def gps_sleep(self):
+        self._gps_enable.value(0)
+
+    def gps_update(self):
+        pass
+
 
 class MockWiring(Wiring):
     """
     Non-functional implementation of Wiring for use in unit testing
     """
+
+    MOCK_LOCATION = {'lat': 39, 'lon': -80, 'utc_seconds': 12345678}
+    MOCK_TIME_TO_FIX_MS = 2000
+
     def __init__(self, **kwargs):
         self.cumulative_lightsleep_time_ms = 0
         self.cumulative_deepsleep_time_ms = 0
         super(MockWiring, self).__init__(**kwargs)
+        self.gps_timer = None
 
     class MockPin(object):
         def __init__(self, value=0, irq_handler=None):
@@ -98,6 +124,9 @@ class MockWiring(Wiring):
         self._btn1 = MockWiring.MockPin(0, irq_handler=self.btn1_irq_handler)
         self.cumulative_lightsleep_time_ms = 0
         self.cumulative_deepsleep_time_ms = 0
+        self._gps_enable = MockWiring.MockPin()
+        self.gps_timer = Timer(duration_ms=self.MOCK_TIME_TO_FIX_MS, event=self.gps_fix_event)
+
 
     def btn1_irq_handler(self, pin):
         pin_value = pin.value()
@@ -120,3 +149,15 @@ class MockWiring(Wiring):
     def deepsleep(self, time_ms):
         self.cumulative_deepsleep_time_ms += time_ms
         self._wake_reason = 'TIMER'
+
+    def gps_wake(self):
+        self._gps_enable.value(1)
+        self.gps_fix_event.kwargs = self.MOCK_LOCATION
+        self.gps_timer.reset()
+
+    def gps_sleep(self):
+        self._gps_enable.value(0)
+        self.gps_timer.cancel()
+
+    def gps_update(self):
+        self.gps_timer.check()
