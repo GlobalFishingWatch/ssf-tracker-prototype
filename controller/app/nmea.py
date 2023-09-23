@@ -24,6 +24,12 @@
 #
 # Details on message types https://aprs.gids.nl/nmea/
 
+# TODO: use time.mktime to construct unix timestamps
+import time
+
+# from datetime import datetime
+# from datetime import timezone
+
 SENTENCE_TYPES = {
     'GPGGA': [
         'time_utc',
@@ -50,11 +56,12 @@ SENTENCE_TYPES = {
         'longitude_hemisphere',
         'speed_knots',
         'track_angle_deg',
-        'date',
+        'date_utc',
         'magnetic_variation',
         'variation_E_W',
     ]
 }
+
 
 def parse_int(nmea_data):
     result = None
@@ -90,6 +97,15 @@ def parse_degrees(nmea_data):
     deg = raw // 100
     minutes = raw % 100
     return round(deg + minutes/60, 6)
+
+
+def parse_time(nmea_data):
+    raw = int(parse_float(nmea_data))
+    hour = raw // 10000
+    minute = (raw // 100) % 100
+    second = raw % 100
+
+    return hour, minute, second
 
 
 def parse_date(nmea_data):
@@ -191,7 +207,7 @@ def parse_sentence(sentence):
     else:
         fields = ['field{}'.format(i) for i in range(1, len(args) + 1)]
 
-    if len(args) != len(fields):
+    if len(args) < len(fields):
         result['error'] = 'Expected {} parameters for {} but got {}'.format(len(fields), sentence_type, len(args))
         return result
 
@@ -211,26 +227,33 @@ def parse_gpgga_args(args):
     # Parse the arguments  for NMEA GPGGA 3D location fix sentence.
 
     return dict(
-        utc_seconds = int(parse_float(args['time_utc'])),
-        latitude = parse_lat_lon(args['latitude_deg_min'], args['latitude_hemisphere']),
-        longitude = parse_lat_lon(args['longitude_deg_min'], args['longitude_hemisphere']),
-        fix_quality = parse_int(args['fix_quality']),
-        satellites = parse_int(args['satellites']),
-        horizontal_dilution = parse_float(args['horizontal_dilution']),
-        altitude_m = parse_float(args['altitude_m']),
-        height_geoid = parse_float(args['height_geoid'])
+        time_utc=parse_time(args['time_utc']),
+        latitude=parse_lat_lon(args['latitude_deg_min'], args['latitude_hemisphere']),
+        longitude=parse_lat_lon(args['longitude_deg_min'], args['longitude_hemisphere']),
+        fix_quality=parse_int(args['fix_quality']),
+        satellites=parse_int(args['satellites']),
+        horizontal_dilution=parse_float(args['horizontal_dilution']),
+        altitude_m=parse_float(args['altitude_m']),
+        height_geoid=parse_float(args['height_geoid'])
     )
 
 
 def parse_gprmc_args(args):
     # Parse the arguments for NMEA GPRMC minimum location fix sentence.
 
-    return dict(
-        utc_seconds = int(parse_float(args['time_utc'])),
-        status = args['status'],
-        latitude = parse_lat_lon(args['latitude_deg_min'], args['latitude_hemisphere']),
-        longitude = parse_lat_lon(args['longitude_deg_min'], args['longitude_hemisphere']),
-        speed_knots = parse_float(args['speed_knots']),
-        track_angle_deg = parse_float(args['track_angle_deg']),
-        date = parse_date(args['date'])
+    result = dict(
+        time_utc=parse_time(args['time_utc']),
+        status=args['status'],
+        fix_quality=1 if args['status'].upper() == 'A' else 0,
+        latitude=parse_lat_lon(args['latitude_deg_min'], args['latitude_hemisphere']),
+        longitude=parse_lat_lon(args['longitude_deg_min'], args['longitude_hemisphere']),
+        speed_knots=parse_float(args['speed_knots']),
+        track_angle_deg=parse_float(args['track_angle_deg']),
+        date=parse_date(args['date_utc'])
     )
+    hour, minute, second = result['time_utc']
+    year, month, day = result['date']
+
+    t = (year, month, day, hour, minute, second, 0, 0, 0)
+    result['utc_seconds'] = int(time.mktime(t))
+    return result

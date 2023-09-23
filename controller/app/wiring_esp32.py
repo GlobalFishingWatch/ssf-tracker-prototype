@@ -109,13 +109,18 @@ class WiringESP32(Wiring):
     def gps_update(self):
         sentence = self._gps_uart.readline()
         if sentence:
-            sentence = sentence.decode().strip()
-            message = nmea.parse_sentence(sentence)
-            if 'error' not in message and message.get('sentence_type') == 'GPRMC':
-                if message['fix_quality'] is not None and message['fix_quality'] >= 1:
-                    # we have a fix, so store the fix details and trigger event
-                    self.gps_fix_event.kwargs = message
-                    self.gps_fix_event.schedule()
+            try:
+                sentence = sentence.decode().strip()
+                message = nmea.parse_sentence(sentence)
+            except UnicodeError:
+                message = {'sentence': sentence, 'error': 'Error decoding bytes to unicode'}
+            fix_quality = message.get('fix_quality', 0)
+            if fix_quality:
+                # we have a fix, so store the fix details and trigger event
+                self.gps_fix_event.kwargs = message
+                self.gps_fix_event.schedule()
+            return message
+        return None
 
     def btn1_irq_handler(self, pin):
         # handle the immediate interrupt

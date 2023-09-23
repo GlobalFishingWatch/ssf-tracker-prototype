@@ -5,9 +5,9 @@ from config import default_app_state
 from wiring import MockWiring
 from statemachine import StateMachine
 from statemachine import MockEvent
-from timer import MockTime
 from timer import Timer
 from test_statemachine import EventTestRunner
+
 
 class TestApp(unittest.TestCase):
     def setUp(self):
@@ -83,7 +83,6 @@ class TestApp(unittest.TestCase):
         self.app.wiring.deepsleep(1)
         self.app.initialize()
 
-
     def test_app_btn_down(self):
         self.assertEqual(self.app.wiring.led1, 0)
         self.app.wiring.btn1 = 1    # button down
@@ -105,11 +104,10 @@ class TestApp(unittest.TestCase):
         self.assertEqual(self.app.wiring.gps_enable, 1)
         self.assertTrue(self.app.wiring.gps_timer.active)
         self.assertEqual(self.app.wiring.gps_timer.event.name, 'gps_ready')
-        self.app.trigger_event('gps_ready')
+        self.app.trigger_event('gps_ready', sentence='test')
         self.app.tick()
         self.assertEqual(self.app.wiring.gps_enable, 0)
         self.assertEqual(len(self.app.locations), 1)
-
 
 
 class TestAppTransitions(EventTestRunner):

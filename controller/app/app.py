@@ -80,17 +80,11 @@ class App(StateMachine):
             self.schedule_event('reset')
         self.load_state(self.config['app_state'])
 
-
     def settings_file_name(self):
         return self.config['SETTINGS_FILE']
 
     def is_running(self):
         return True
-
-    # def get_sleep_time_ms(self, min_time, max_time):
-    #     timer = Timer.get_next_timer()
-    #     sleep_time =  min(timer.time_remaining_ms(), max_time) if timer else max_time
-    #     return sleep_time if sleep_time > min_time else 0
 
     def max_sleep_time_ms(self, max_sleep_time_ms):
         next_timer = Timer.get_next_timer()
@@ -108,6 +102,7 @@ class App(StateMachine):
         while self.is_running():
             Timer.check_active_timers()
             Event.trigger_scheduled_events()
+            self.gps_update()
             self.lightsleep()
 
     @staticmethod
@@ -176,12 +171,20 @@ class App(StateMachine):
     def on_gps_ready(self, event):
         # self.locations.append(self.gps.last_location)
         # self.gps.schedule_event('sleep')
-        self.locations.append(event.kwargs)
+        location = event.kwargs
+        if location:
+            self.locations.append(location)
+            self.log.debug(location.get('sentence', 'unknown message in gps_ready event'))
         self.wiring.gps_sleep()
 
     def on_gps_failed(self, event):
         # self.gps.schedule_event('sleep')
         self.wiring.gps_sleep()
+
+    def gps_update(self):
+        message = self.wiring.gps_update()
+        if message and 'sentence' in message:
+            self.log.info(message['message'])
 
     def save_state(self):
         state = super(App, self).save_state()

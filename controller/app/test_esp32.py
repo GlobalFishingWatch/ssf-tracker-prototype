@@ -6,7 +6,9 @@ from statemachine import MockEvent
 class TestWiringEsp32(unittest.TestCase):
     def setUp(self):
         config = {}
-        self.wiring = WiringESP32(config, btn1_up_event=MockEvent('btn_up'), btn1_down_event=MockEvent('btn_down'))
+        self.wiring = WiringESP32(config=config, btn1_up_event=MockEvent('btn_up'),
+                                          btn1_down_event=MockEvent('btn_down'),
+                                          gps_fix_event=MockEvent('gps_ready'))
         self.wiring.initialize()
 
     def test_wiring(self):

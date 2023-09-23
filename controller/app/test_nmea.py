@@ -14,6 +14,7 @@ from nmea import parse_gpgga_args
 from nmea import parse_gprmc_args
 from nmea import parse_sentence
 
+
 class TestNMEA(unittest.TestCase):
 
     def setUp(self):
@@ -28,7 +29,7 @@ class TestNMEA(unittest.TestCase):
             ("$", ("", "")),
             ("$*", ("", "")),
             ("$CMD", ("CMD", "")),
-            ("$CMD,1,2,3*FF", ("CMD,1,2,3","FF")),
+            ("$CMD,1,2,3*FF", ("CMD,1,2,3", "FF")),
         ]
         for sentence, expected in params:
             with self.subTest(sentence=sentence, expected=expected):
@@ -116,7 +117,7 @@ class TestNMEA(unittest.TestCase):
     def test_parse_gpgga_args(self):
         params = [
             ("235317.000,4003.9039,N,10512.5793,W,1,08,1.6,1577.9,M,-20.7,M,,0000",
-             {'height_geoid': -20.7, 'utc_seconds': 235317, 'horizontal_dilution': 1.6, 'longitude': -105.209655,
+             {'height_geoid': -20.7, 'time_utc': (23, 53, 17), 'horizontal_dilution': 1.6, 'longitude': -105.209655,
               'satellites': 8, 'fix_quality': 1, 'altitude_m': 1577.9, 'latitude': 40.065065}),
         ]
         for args, expected in params:
@@ -124,12 +125,12 @@ class TestNMEA(unittest.TestCase):
                 args = dict(zip(nmea.SENTENCE_TYPES['GPGGA'], args.split(',')))
                 actual = parse_gpgga_args(args)
                 for k in expected.keys():
-                    self.assertEqual(actual[k], expected[k])
+                    self.assertAlmostEqual(actual[k], expected[k], places=4)
 
     def test_parse_gprmc_args(self):
         params = [
             ("235316.000,A,4003.9040,N,10512.5792,W,0.09,144.75,141112,,",
-             {'utc_seconds': 235316,'status': 'A', 'latitude': 40.065067,
+             {'utc_seconds': 1352955196, 'status': 'A', 'latitude': 40.065067,
               'speed_knots': 0.09, 'date': (2012, 11, 14)}
              ),
         ]
@@ -145,12 +146,14 @@ class TestNMEA(unittest.TestCase):
             ("$GPGGA,BAD_DATA,0000*5F",
              {'error': 'Invalid checksum'}),
             ("$GPRMC,235316.000,A,4003.9040,N,10512.5792,W,0.09,144.75,141112,,*19",
-             {'utc_seconds': 235316,'status': 'A', 'latitude': 40.065067,
+             {'time_utc': (23, 53, 16), 'status': 'A', 'latitude': 40.065067,
               'speed_knots': 0.09, 'date': (2012, 11, 14)}),
             ("$GPGGA,235317.000,4003.9039,N,10512.5793,W,1,08,1.6,1577.9,M,-20.7,M,,0000*5E",
-             {'utc_seconds': 235317, 'sentence_type': 'GPGGA'}),
+             {'time_utc': (23, 53, 17), 'sentence_type': 'GPGGA'}),
             ("$GPGSA,A,3,22,18,21,06,03,09,24,15,,,,,2.5,1.6,1.9*3E",
              {'sentence_type': 'GPGSA', 'field1': 'A'}),
+            ("$GPRMC,000629.000,A,3927.8092,N,07747.8769,W,0.53,347.18,220923,,,A*79",
+             {'status': 'A', 'fix_quality': 1}),
 
         ]
         for sentence, expected in params:
