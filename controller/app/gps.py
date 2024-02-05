@@ -86,4 +86,3 @@ class MPYGPS(MockGPS):
         self.gps_timer.cancel()
         self._last_location = None
 
-

@@ -53,4 +53,3 @@ class Button(StateMachine):
     def load_state(self, state):
         self.bounce_timer.load_state(state['timer'])
         super(Button, self).load_state(state)
-
