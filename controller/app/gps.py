@@ -4,12 +4,8 @@ from statemachine import State
 from statemachine import Transition
 from statemachine import StateMachine
 from timer import Timer
+from machine import UART
 
-class Location(object):
-    def __init__(self, lat = 0, lon = 0, timestamp = 0):
-        self.lat = lat
-        self.lon = lon
-        self.timestamp = timestamp
 
 class MockGPS(StateMachine):
     states = [
@@ -36,13 +32,13 @@ class MockGPS(StateMachine):
         return self._last_location
 
     def on_enter_locating(self, event):
-        # start a timer that will transition us to reacy
+        # start a timer that will transition us to ready
         self.gps_timer.reset()
 
     def on_enter_ready(self, event):
         # pretend that we have fixed a GPS position
         self.gps_timer.cancel()
-        self._last_location = Location (lat=22, lon=33, timestamp=Timer.current_time_ms())
+        self._last_location = dict(lat=22, lon=33, timestamp=Timer.current_time_ms())
         self.on_ready_event.trigger()
 
     def on_enter_sleep(self, event):
@@ -50,4 +46,44 @@ class MockGPS(StateMachine):
         # pretend to sleep
         self.gps_timer.cancel()
         self._last_location = None
+
+
+class MPYGPS(MockGPS):
+    def __init__(self, gps_timeout_ms=2000, on_ready_event=None, timer=None, baudrate=9600, tx=8, rx=7, **kwargs):
+        super(MPYGPS, self).__init__(**kwargs)
+        self.gps_timeout_ms = gps_timeout_ms
+        self.on_ready_event = on_ready_event
+        self.gps_timer = timer if timer else Timer(event=self.get_event('gps_ready'), duration_ms=self.gps_timeout_ms)
+        self._last_location = None
+        self.tx = tx
+        self.rx = rx
+
+        self.uart = UART(1, baudrate)
+        self.uart.init(baudrate, tx=self.tx, rx=self.rx)
+
+    @property
+    def last_location(self):
+        # get the most recent recorded location.  Could be None
+        return self._last_location
+
+    def on_enter_locating(self, event):
+        # start a timer that will transition us to ready
+        # if(gps
+        self.gps_timer.reset()
+        print("Enter Locating")
+
+    def on_enter_ready(self, event):
+        # If we have a fix, log message
+        self.gps_timer.cancel()
+        self._last_location = self.uart.readline()
+        # log_location(self._last_location)
+        print("GPS READY")
+        self.on_ready_event.trigger()
+
+    def on_enter_sleep(self, event):
+        # cancel any running timer and clear the last location
+        # pretend to sleep
+        self.gps_timer.cancel()
+        self._last_location = None
+
 
