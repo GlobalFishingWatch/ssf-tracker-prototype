@@ -231,4 +231,3 @@ class App(StateMachine):
         time.sleep(5)
         self.wiring.rgb = 'off'
         self.set_state('idle')
-

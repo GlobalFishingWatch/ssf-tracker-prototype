@@ -2,22 +2,32 @@
 # this is the main app for the microcontroller
 # runs after boot.py
 
-from config import load_config
-from config import configure_logger
+
+
+# from config import load_config
+# from config import configure_logger
+
 from app import App
 from wiring_esp32 import WiringESP32
+#
+# app_config = {
+# #
+# }
+app = App.from_settings('./config.json', wiring_type=WiringESP32)
+app.initialize()
 
-# LOAD CONFIG
-config_filename = './config.json'
-app_config = load_config(config_filename)
-
-# SET UP LOGGING
-log = configure_logger(app_config)
-log.info('Starting App...')
+# # LOAD CONFIG
+# config_filename = './config.json'
+# app_config = load_config(config_filename)
+#
+# # SET UP LOGGING
+# log = configure_logger(app_config)
+# log.info('Starting App...')
 
 # app = App(WiringESP32, log=log, config=app_config)
 # app.initialize()
-# app.run()
+
+app.run()
 
 
 import machine
@@ -66,10 +76,7 @@ def irq_handler(pin):
     schedule(irq_scheduled, pin)
 
 
-led = Pin (5, Pin.OUT)
-wake1 = Pin(4, mode = Pin.IN)
-wake1.irq(handler=irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, wake=machine.SLEEP)
-esp32.wake_on_ext0(pin = wake1, level = esp32.WAKEUP_ANY_HIGH)
+≈# wake1.irq(handler=irq_handler, trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, wake=machine.SLEEP)
 
 def run_test_deep_sleep():
     log.info(wake_msg())
@@ -131,7 +138,13 @@ def run_test_sleep():
         #sleep for 10 seconds (10000 milliseconds)
         sleep(10)
 
+def blink():
+    while True:
+        led.value(not led.value())
+        sleep(0.5)
 
 # run_test_deep_sleep()
 # run_test_light_sleep()
-run_test_sleep()
+# run_test_sleep()
+# blink()
+
