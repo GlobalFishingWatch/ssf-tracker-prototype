@@ -1,7 +1,6 @@
 # A basic state machine
-from config import default_logger
+from util import default_logger
 from collections import deque
-import ujson as json
 
 
 class State(object):
@@ -18,7 +17,10 @@ class State(object):
 
 
 class Event(object):
+    # NB: there is a built-in deque in some micropython builds that takes 2 positional params
+    # If you get an error here, then you want to make sure you are using collections-deque from micropython-lib
     event_queue = deque()
+
 
     def __init__(self, name, machine, **kwargs):
         self.name = name
@@ -30,8 +32,12 @@ class Event(object):
         self.machine.trigger_event(self)
 
     def trigger(self):
+        # does the same thing as schedule
+        self.schedule()
+
+    def schedule(self):
         # put the event in the event queue to be executed on the next call to trigger_scheduled_events()
-        self.event_queue.appendleft(self)
+        self.event_queue.append(self)
 
     @classmethod
     def trigger_scheduled_events(cls):
@@ -43,14 +49,14 @@ class Event(object):
 class MockEvent(Event):
     # Event class for testing.  Does not do anything other than count the
     # number of times that the event has benn triggered
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self.trigger_count = 0
-        super(MockEvent, self).__init__(name=name, machine=None)
+        super(MockEvent, self).__init__(name=name, machine=None, **kwargs)
 
     def _trigger(self):
         pass
 
-    def trigger(self):
+    def schedule(self):
         self.trigger_count += 1
 
 
@@ -174,6 +180,10 @@ class StateMachine(object):
         for t in transitions:
             t.execute(event)
 
+    def schedule_event(self, event, **kwargs):
+        event = self.get_event(event, **kwargs)
+        event.schedule()
+
     @classmethod
     def callback(cls, func, event):
         func = getattr(event.machine, func) if func else None
@@ -186,3 +196,4 @@ class StateMachine(object):
 
     def load_state(self, state):
         self._state = self.get_state(state['state'])
+

@@ -58,6 +58,7 @@ class Timer(object):
 
     def cancel(self):
         self.active = False
+        self._deadline = 0
         self.active_timers.discard(self)
 
     def trigger_event(self):
@@ -109,3 +110,4 @@ class MockTime(object):
 
     def tearDown(self):
         Timer.current_time_ms = self.old_time_fn
+
