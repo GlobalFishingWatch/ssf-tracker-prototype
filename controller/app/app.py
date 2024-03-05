@@ -36,10 +36,11 @@ class App(StateMachine):
         Transition(event='btn1_long_press', dest='setup', source='sos'),
         Transition(event='btn1_long_press', dest='sos', source=None),
         Transition(event='btn1_released', after='on_btn1_released'),
-        Transition(event='btn2_pressed', dest='setup'),
+        Transition(event='btn2_pressed', dest='locating'),
         Transition(event='btn2_released', after='on_btn2_released'),
         Transition(event='gps_timer', source='idle', dest='locating'),
         Transition(event='gps_ready', source='locating', dest='idle', before='on_gps_ready'),
+        Transition(event='gps_fail', source='locating', dest='idle', before='on_gps_fail'),
 
         # Catch the gps_timer event in case we were not it the idle state and can't move to locating yet
         Transition(event='gps_timer', after='retry_event'),
@@ -71,12 +72,13 @@ class App(StateMachine):
                               on_release_event=self.get_event('btn2_released'))
 
         self.idle_timer = Timer(event=self.get_event('idle_timeout'),
-                                duration_ms=self.config.get('IDLE_TIMEOUT_MS', 1000),
+                                duration_ms=self.config.get('IDLE_TIMEOUT_MS', 3000),
                                 recurring=True)
-        self.gps = MPYGPS(on_ready_event=self.get_event('gps_ready'), tx=8, rx=7)
+        self.gps = MPYGPS(on_ready_event=self.get_event('gps_ready'), on_fail_event=self.get_event('gps_fail'), tx=8,
+                          rx=7)
         self.gps_timer = Timer(event=self.get_event('gps_timer'),
-                               duration_ms=self.config.get('GPS_FIX_INTERVAL_MS', 10000),
-                               recurring=True)
+                               duration_ms=self.config.get('GPS_FIX_INTERVAL_MS', 25000),
+                               recurring=False)
         self.locations = []
 
     def initialize(self):
@@ -88,6 +90,7 @@ class App(StateMachine):
         self.wiring.initialize()
         wake_reason = self.wiring.wake_reason()
         self.log.debug(f'Wake reason: {wake_reason}')
+        wake_reason = 'RESET'
         if wake_reason == 'RESET':
             self.config['app_state'] = default_app_state
             self.schedule_event('reset')
@@ -131,14 +134,18 @@ class App(StateMachine):
 
     @staticmethod
     def tick():
+        print("tick()")
         Timer.check_active_timers()
         Event.trigger_scheduled_events()
 
     def on_reset(self, event):
+        print("on_reset()")
         self.gps_timer.reset()
 
     def on_idle(self, event):
+        print("on_idle()")
         self.idle_timer.reset()
+        # self.gps_timer.reset()
 
     def can_deep_sleep(self, event):
         # can't sleep if
@@ -190,7 +197,10 @@ class App(StateMachine):
 
     def on_locating(self, event):
         # start to fix a new gps location
+        print("on_locating()")
         self.gps.schedule_event('locate')
+        # self.gps_timer.cancel()
+        self.idle_timer.cancel()
 
     def retry_event(self, event):
         # retry an event after a delay
@@ -199,8 +209,18 @@ class App(StateMachine):
         t.reset()
 
     def on_gps_ready(self, event):
-        self.locations.append(self.gps.last_location)
-        self.gps.schedule_event('sleep')
+        self.write_location(self.gps.last_location)
+        # self.locations.append(self.gps.last_location())
+        # self.gps.schedule_event('sleep')
+
+    def on_gps_fail(self, event):
+        self.write_location(None)
+        # self.gps.schedule_event('sleep')
+
+    def write_location(self, last_location):
+        # self.config.['LOCATION_FILE']
+        with open('locations.txt', 'a') as loc_file:
+            loc_file.write(str(last_location) + '\n')
 
     def save_state(self):
         state = super(App, self).save_state()
@@ -230,4 +250,3 @@ class App(StateMachine):
         # Timer to timeout of setup"
         time.sleep(5)
         self.wiring.rgb = 'off'
-        self.set_state('idle')
