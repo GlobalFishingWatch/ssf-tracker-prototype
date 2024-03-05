@@ -36,7 +36,7 @@ class App(StateMachine):
         Transition(event='btn1_long_press', dest='setup', source='sos'),
         Transition(event='btn1_long_press', dest='sos', source=None),
         Transition(event='btn1_released', after='on_btn1_released'),
-        Transition(event='btn2_pressed', dest='locating'),
+        Transition(event='btn2_pressed', dest='setup'),
         Transition(event='btn2_released', after='on_btn2_released'),
         Transition(event='gps_timer', source='idle', dest='locating'),
         Transition(event='gps_ready', source='locating', dest='idle', before='on_gps_ready'),
